@@ -11,6 +11,7 @@ A Tauri-based desktop application for managing daily nutrition plans with meal t
 ### 1.1 Technology Stack
 
 **Frontend:**
+
 - **Framework**: React with TypeScript (modern, component-based, great Tauri support)
 - **Styling**: Tailwind CSS (rapid development, consistent design system)
 - **UI Components**: shadcn/ui or similar (accessible, customizable components)
@@ -18,12 +19,14 @@ A Tauri-based desktop application for managing daily nutrition plans with meal t
 - **Icons**: Lucide React (consistent icon system)
 
 **Backend:**
+
 - **Core**: Rust (Tauri backend)
 - **Database**: SQLite (embedded, perfect for desktop apps, no server needed)
 - **ORM**: Diesel or sqlx (type-safe database interactions)
 - **API Layer**: Tauri Commands (IPC between frontend and Rust)
 
 **Build & Dev Tools:**
+
 - Tauri CLI
 - Vite (fast development server)
 - ESLint + Prettier (code quality)
@@ -71,7 +74,9 @@ A Tauri-based desktop application for managing daily nutrition plans with meal t
 ### 2.1 Core Entities
 
 #### MealTemplate
+
 Represents the blueprint for a meal option that can be selected.
+
 ```rust
 struct MealTemplate {
     id: i32,
@@ -88,7 +93,9 @@ struct MealTemplate {
 ```
 
 #### MealSlot
+
 A specific time slot in a day that needs to be filled.
+
 ```rust
 struct MealSlot {
     id: i32,
@@ -99,7 +106,9 @@ struct MealSlot {
 ```
 
 #### MealEntry
+
 An actual meal that was consumed/planned (links a template to a slot).
+
 ```rust
 struct MealEntry {
     id: i32,
@@ -115,6 +124,7 @@ struct MealEntry {
 ```
 
 #### Enums
+
 ```rust
 enum MealCategory {
     Breakfast,
@@ -174,7 +184,7 @@ CREATE TABLE meal_entries (
 
 -- Weekly usage tracking (for enforcing limits)
 CREATE VIEW weekly_meal_usage AS
-SELECT 
+SELECT
     meal_template_id,
     strftime('%Y-%W', date) as week,
     COUNT(*) as usage_count
@@ -195,18 +205,20 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ### 3.1 Main Views
 
 #### 1. **Daily View (Primary Interface)**
+
 - **Layout**: Calendar header + horizontal timeline of meal slots
-- **Interaction**: 
+- **Interaction**:
   - Each slot shows either an empty state or a filled meal card
   - Click empty slot → opens meal selection modal
   - Click filled slot → opens meal details editor
-- **Visual Design**: 
+- **Visual Design**:
   - Cards with meal images/icons
   - Color coding by meal type (breakfast = yellow, lunch = blue, dinner = purple)
   - Location badges (home icon, office icon, restaurant icon)
   - Weekly limit indicator (e.g., "1/2 this week" badge)
 
 #### 2. **Meal Selection Modal**
+
 - **Search & Filter**:
   - Search bar (by meal name)
   - Filter by location type
@@ -221,6 +233,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
   - Show "Frequently chosen" section
 
 #### 3. **Meal Detail Editor**
+
 - **Form Fields**:
   - Location dropdown (auto-filled from template but editable)
   - Portion size slider/input
@@ -232,6 +245,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
   - "Copy to tomorrow" quick action
 
 #### 4. **Weekly Overview**
+
 - **Calendar Grid**: 7 days × meal slots
 - **Analytics Panel**:
   - Meals completed this week
@@ -242,6 +256,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
   - "Template this week"
 
 #### 5. **Meal Templates Manager**
+
 - **List View**: All available meal templates
 - **CRUD Operations**:
   - Add new template
@@ -250,6 +265,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 - **Bulk Import**: CSV import for initial setup
 
 #### 6. **Analytics/History View** (Phase 2+)
+
 - Meal frequency charts
 - Location distribution
 - Weekly compliance tracking
@@ -258,6 +274,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ### 3.2 User Flow Examples
 
 **Scenario 1: Planning Tomorrow's Breakfast**
+
 1. User opens app → sees today's view
 2. Clicks date picker → selects tomorrow
 3. Clicks empty "Breakfast" slot
@@ -269,6 +286,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 9. Saves → card appears in breakfast slot
 
 **Scenario 2: Logging Actual Meal**
+
 1. User ate lunch, opens app
 2. Today's lunch slot shows planned "Chicken Salad"
 3. Clicks card → detail editor opens
@@ -280,6 +298,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ### 3.3 Design System
 
 **Colors:**
+
 - Primary: Blue (#3B82F6) - actions, links
 - Success: Green (#10B981) - completed meals
 - Warning: Orange (#F59E0B) - weekly limit warnings
@@ -291,15 +310,18 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
   - Snack: Light green (#86EFAC)
 
 **Typography:**
+
 - Headings: Inter or similar (clean, modern)
 - Body: System font stack for performance
 - Sizes: Clear hierarchy (base 16px)
 
 **Spacing:**
+
 - 4px base unit
 - Consistent padding/margins using Tailwind scale
 
 **Components:**
+
 - Rounded corners (medium radius)
 - Subtle shadows for cards
 - Smooth transitions (200ms)
@@ -309,24 +331,33 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 
 ## 4. Development Phases
 
-### Phase 0: Project Setup & Scaffolding ✓ (Next)
-**Goal**: Get development environment ready
-- [ ] Initialize Tauri project with React + TypeScript
-- [ ] Set up Tailwind CSS and UI component library
-- [ ] Configure project structure (folders, modules)
-- [ ] Set up SQLite database with Diesel/sqlx
-- [ ] Create initial database schema and migrations
-- [ ] Set up development tooling (ESLint, Prettier)
-- [ ] Create README with setup instructions
+### Phase 0: Project Setup & Scaffolding ✓ (95% COMPLETED)
 
-**Deliverable**: Running "Hello World" Tauri app with database connection
+**Goal**: Get development environment ready
+
+- [x] Initialize Tauri project with React + TypeScript
+- [x] Set up Tailwind CSS and UI component library
+- [x] Configure project structure (folders, modules)
+- [x] Add Rust dependencies (sqlx, serde, tokio, chrono)
+- [ ] Create initial database schema and migrations (In Progress)
+- [x] Set up development tooling (TypeScript, Tailwind)
+- [x] Create README with setup instructions
+- [x] Verify IPC communication works
+- [x] Generate app icons
+- [x] Document Linux graphics workaround
+
+**Deliverable**: Running "Hello World" Tauri app with IPC communication tested
+
+**Status**: Basic scaffolding complete. Database schema creation in progress.
 
 ---
 
 ### Phase 1: Core Data Layer (Week 1-2)
+
 **Goal**: Build the backend foundation
 
 **Backend Tasks:**
+
 - [ ] Implement database models (MealTemplate, MealEntry)
 - [ ] Create repository layer for CRUD operations
 - [ ] Implement Tauri commands for:
@@ -338,6 +369,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 - [ ] Write unit tests for business logic
 
 **Frontend Tasks:**
+
 - [ ] Set up TypeScript types matching Rust models
 - [ ] Create API client wrapper for Tauri commands
 - [ ] Set up state management structure
@@ -347,9 +379,11 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ---
 
 ### Phase 2: Basic Daily View (Week 3-4)
+
 **Goal**: Users can view and add meals to today
 
 **Tasks:**
+
 - [ ] Create MealSlot component (empty and filled states)
 - [ ] Create MealCard component (visual display)
 - [ ] Build daily timeline layout
@@ -363,9 +397,11 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ---
 
 ### Phase 3: Meal Selection & Filtering (Week 5)
+
 **Goal**: Improve meal selection experience
 
 **Tasks:**
+
 - [ ] Enhanced meal selection modal with grid layout
 - [ ] Add search functionality
 - [ ] Implement filters (location, category, tags)
@@ -379,9 +415,11 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ---
 
 ### Phase 4: Meal Details & Editing (Week 6)
+
 **Goal**: Track detailed information about meals
 
 **Tasks:**
+
 - [ ] Create meal detail editor component
 - [ ] Implement portion size input
 - [ ] Add notes field
@@ -395,9 +433,11 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ---
 
 ### Phase 5: Templates Manager (Week 7)
+
 **Goal**: Users can manage their meal options
 
 **Tasks:**
+
 - [ ] Create templates list view
 - [ ] Build template form (create/edit)
 - [ ] Implement CRUD operations
@@ -411,9 +451,11 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ---
 
 ### Phase 6: Weekly View & Analytics (Week 8-9)
+
 **Goal**: See patterns and plan ahead
 
 **Tasks:**
+
 - [ ] Create weekly calendar grid component
 - [ ] Show 7-day meal overview
 - [ ] Add weekly statistics panel
@@ -427,9 +469,11 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ---
 
 ### Phase 7: Polish & Enhancement (Week 10+)
+
 **Goal**: Production-ready experience
 
 **Tasks:**
+
 - [ ] Add keyboard shortcuts
 - [ ] Implement drag-and-drop meal reordering
 - [ ] Add data export (CSV, JSON)
@@ -446,6 +490,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ---
 
 ### Future Enhancements (Post-Launch)
+
 - **Remote Database Support**: Connect to PostgreSQL/MySQL instance on NAS
   - Abstract database layer to support multiple backends
   - Configuration for connection strings
@@ -466,6 +511,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 ## 5. Technical Decisions & Rationale
 
 ### Why Tauri?
+
 - Native performance with small binary size
 - Rust backend for safety and speed
 - Cross-platform (Windows, macOS, Linux)
@@ -473,6 +519,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 - No Electron overhead
 
 ### Why SQLite (Initially)?
+
 - Perfect for desktop apps (embedded, no server)
 - Excellent performance for this use case
 - Zero configuration for development
@@ -484,12 +531,14 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
   - Can support both local (SQLite) and remote (PostgreSQL) in final version
 
 ### Why React + TypeScript?
+
 - Component-based architecture fits card UI pattern
 - Strong typing helps with Tauri IPC
 - Large ecosystem of UI libraries
 - Fast development with modern tooling (Vite)
 
 ### State Management Choice
+
 - **Zustand** (recommended):
   - Simple API, minimal boilerplate
   - Good TypeScript support
@@ -580,12 +629,14 @@ nutrition-helper/
 When we initialize the project, we'll:
 
 1. **Create Tauri App**:
+
    ```bash
    npm create tauri-app@latest
    # Choose: React + TypeScript
    ```
 
 2. **Install Dependencies**:
+
    ```bash
    npm install zustand lucide-react date-fns
    npm install -D tailwindcss postcss autoprefixer
@@ -593,6 +644,7 @@ When we initialize the project, we'll:
    ```
 
 3. **Set up Rust Dependencies** (Cargo.toml):
+
    ```toml
    [dependencies]
    tauri = "..."
@@ -616,6 +668,7 @@ When we initialize the project, we'll:
 ## 8. Development Workflow
 
 ### Daily Development Cycle
+
 1. **Backend First**: Implement Tauri command and business logic
 2. **Test Backend**: Use Tauri dev tools or unit tests
 3. **Frontend Integration**: Create UI that calls the command
@@ -623,11 +676,13 @@ When we initialize the project, we'll:
 5. **Commit**: Small, focused commits
 
 ### Testing Strategy
+
 - **Backend**: Unit tests for business logic, integration tests for DB operations
 - **Frontend**: Component tests with React Testing Library (Phase 7)
 - **E2E**: Manual testing initially, consider Playwright later
 
 ### Code Review Checkpoints
+
 - After each phase completion
 - Before adding new major features
 - When refactoring significant code
@@ -637,25 +692,31 @@ When we initialize the project, we'll:
 ## 9. Open Questions & Decisions Needed
 
 ### Decisions Made:
+
 1. **Meal Slot Configuration**: Hardcoded 5 slots (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner)
+
    - Can make configurable in Phase 7 if needed
 
 2. **Image Handling**: Future enhancement (Phase 7+)
+
    - File system with paths in DB when implemented
    - Focus on core functionality first
 
 3. **Weekly Limits**: Week starts on Monday ✓
 
 4. **Data Validation**: Allow any positive number for portion sizes
+
    - Keep it flexible for user's needs
 
 5. **Templates vs Entries**: Editing a template does NOT affect past entries
+
    - Entries are snapshots of the template at creation time
 
 6. **First-Time Setup**: User will input their own meal templates
+
    - No default templates needed
 
-7. **Database Architecture**: 
+7. **Database Architecture**:
    - **Phase 1-6**: SQLite for local development and testing
    - **Phase 7+**: Add remote database support (PostgreSQL/MySQL on NAS)
    - Design data layer to be database-agnostic from the start
@@ -665,6 +726,7 @@ When we initialize the project, we'll:
 ## 10. Success Metrics
 
 ### Phase Completion Criteria:
+
 - ✅ All phase tasks completed
 - ✅ No critical bugs
 - ✅ Code reviewed and refactored
@@ -672,6 +734,7 @@ When we initialize the project, we'll:
 - ✅ Documentation updated
 
 ### Final Release Criteria:
+
 - Can manage 50+ meal templates smoothly
 - Can view/edit meals for any date
 - Weekly limits enforced correctly
@@ -684,6 +747,7 @@ When we initialize the project, we'll:
 ## Next Steps
 
 Now that we have this plan, we can:
+
 1. **Review and refine** this document together
 2. **Make decisions** on open questions
 3. **Start Phase 0**: Initialize the Tauri project

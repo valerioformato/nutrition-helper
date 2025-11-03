@@ -5,6 +5,7 @@ A desktop application for managing daily nutrition plans with meal tracking, bui
 ## 📋 Overview
 
 Nutrition Helper allows you to:
+
 - Plan meals using a card-based interface
 - Track meals across different locations (home, office, restaurant)
 - Enforce weekly limits on certain meal options
@@ -26,21 +27,32 @@ Nutrition Helper allows you to:
 
 ## 🚀 Current Status
 
-**Phase 0**: Project Setup & Scaffolding ⏳
+**Phase 0**: Project Setup & Scaffolding (95% Complete) 🔧
 
 ### Completed
+
 - [x] Architecture planning
 - [x] Technology stack decisions
 - [x] Development plan documentation
+- [x] Tauri 2.0 project initialization
+- [x] React + TypeScript + Vite setup
+- [x] Tailwind CSS v3 configuration
+- [x] Rust dependencies (sqlx, serde, tokio, chrono)
+- [x] Project structure (commands, models, db, repository, services)
+- [x] IPC communication tested and working
+- [x] App icons generated for all platforms
+- [x] Linux graphics workaround documented
+- [x] Git repository initialized with commits
 
 ### In Progress
-- [ ] Tauri project initialization
-- [ ] Database schema creation
-- [ ] Project structure setup
+
+- [ ] Database schema creation (SQL migrations)
+- [ ] Database connection test
 
 ## 🛠️ Setup Instructions
 
 ### Prerequisites
+
 - Node.js (v18+)
 - Rust (latest stable)
 - npm or yarn
@@ -98,7 +110,9 @@ nutrition-helper/
 ## 🔑 Key Concepts
 
 ### Meal Templates
+
 Reusable meal options that define:
+
 - Name and description
 - Category (breakfast, lunch, dinner, snack)
 - Location type (home, office, restaurant, any)
@@ -106,7 +120,9 @@ Reusable meal options that define:
 - Tags for filtering
 
 ### Meal Entries
+
 Actual logged meals that include:
+
 - Reference to a meal template
 - Date and time slot
 - Location where eaten
@@ -115,7 +131,9 @@ Actual logged meals that include:
 - Completion status
 
 ### Meal Slots
+
 5 daily time slots:
+
 1. Breakfast
 2. Morning Snack
 3. Lunch
