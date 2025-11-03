@@ -57,6 +57,9 @@ npm install -D @tauri-apps/cli
 # Run in development mode
 npm run tauri dev
 
+# Run in development mode (Linux with graphics driver issues)
+npm run tauri:dev:linux
+
 # Build for production
 npm run tauri build
 ```

@@ -2,31 +2,32 @@
   // Rust specific settings
   "rust-analyzer.cargo.features": "all",
   "rust-analyzer.checkOnSave.command": "clippy",
-  
   // TypeScript settings
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  
   // Editor settings for consistency
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "explicit"
   },
-  
   // File associations
   "files.associations": {
     "*.rs": "rust",
     "*.tsx": "typescriptreact",
     "*.css": "tailwindcss"
   },
-  
   // Tailwind CSS IntelliSense
   "tailwindCSS.experimental.classRegex": [
-    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
-    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+    [
+      "cva\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*).*?[\"'`]"
+    ],
+    [
+      "cx\\(([^)]*)\\)",
+      "(?:'|\"|`)([^']*)(?:'|\"|`)"
+    ]
   ],
-  
   // Exclude patterns
   "files.exclude": {
     "**/.git": true,
@@ -34,18 +35,15 @@
     "**/node_modules": true,
     "**/target": true
   },
-  
   "search.exclude": {
     "**/node_modules": true,
     "**/target": true,
     "**/*.lock": true
   },
-
   // Terminal settings for Tauri development
   "terminal.integrated.env.linux": {
     "RUST_BACKTRACE": "1"
   },
-
   // Project-specific reminders
   "todo-tree.general.tags": [
     "TODO",
@@ -53,14 +51,12 @@
     "PHASE",
     "NOTE"
   ],
-  
   "todo-tree.highlights.customHighlight": {
     "PHASE": {
       "icon": "checklist",
       "foreground": "#4CAF50"
     }
   },
-
   // Recommended extensions
   "extensions.ignoreRecommendations": false
 }
