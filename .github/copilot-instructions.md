@@ -1,0 +1,82 @@
+# GitHub Copilot Instructions for Nutrition Helper
+
+## Project Context
+This is a Tauri-based desktop application for managing daily nutrition plans with meal tracking. Always refer to `DEVELOPMENT_PLAN.md` for complete architecture details and development phases.
+
+## Core Architecture Decisions
+
+### Technology Stack
+- **Frontend**: React + TypeScript + Tailwind CSS + Vite
+- **Backend**: Rust (Tauri)
+- **Database**: SQLite initially, designed to migrate to PostgreSQL/MySQL on NAS later
+- **State Management**: Zustand
+- **ORM**: sqlx (database-agnostic)
+
+### Key Design Patterns
+1. **Repository Pattern**: Abstract database operations to support multiple DB backends
+2. **Card-Based UI**: Meal options are visual cards that fill meal slots
+3. **Template vs Entry**: MealTemplates are reusable options, MealEntries are actual logged meals
+4. **Slot-Based Planning**: 5 fixed meal slots per day (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner)
+
+### Important Rules
+- **Weeks start on Monday** for weekly limit calculations
+- **Entries are snapshots**: Editing a template does NOT affect past meal entries
+- **Weekly limits**: Some meals are limited to 1-2 times per week
+- **Location-aware**: Meals have different options for Home/Office/Restaurant
+- **Database agnostic**: Write queries that work with both SQLite and PostgreSQL
+
+## Development Phases
+Current Phase: **Phase 0 - Project Setup & Scaffolding**
+
+Follow the phased approach in DEVELOPMENT_PLAN.md:
+- Phase 0: Project initialization (current)
+- Phase 1: Core data layer
+- Phase 2: Basic daily view
+- Phase 3: Meal selection & filtering
+- Phase 4: Meal details & editing
+- Phase 5: Templates manager
+- Phase 6: Weekly view & analytics
+- Phase 7: Polish & enhancements (including remote DB support)
+
+## Coding Standards
+
+### Rust Backend
+- Use Tauri commands for IPC
+- Implement proper error handling with Result<T, E>
+- Keep business logic separate from Tauri command handlers
+- Use repository pattern for all database operations
+- Add #[derive(Serialize, Deserialize)] to models that cross IPC boundary
+
+### TypeScript Frontend
+- Use TypeScript strictly (no `any` types)
+- Components in PascalCase, files match component names
+- Use Tailwind utility classes for styling
+- Wrap Tauri commands in typed API functions (in `lib/api.ts`)
+- Keep components small and focused
+
+### Database
+- Use sqlx with compile-time checked queries
+- Design schema to be compatible with both SQLite and PostgreSQL
+- Always use parameterized queries (never string concatenation)
+- Include timestamps (created_at, updated_at) on all tables
+
+## File Organization
+Follow the structure outlined in DEVELOPMENT_PLAN.md Section 6:
+- `src-tauri/src/`: Rust backend (commands, models, db, repository, services)
+- `src/`: React frontend (components, views, lib, store, styles)
+- Keep concerns separated (presentation, business logic, data access)
+
+## Current Focus
+We are in Phase 0: Setting up the project scaffolding. Next steps will be building the core data layer with database models and Tauri commands.
+
+## Future Considerations
+- Mobile app support (Tauri Mobile or React Native) - Phase 8+
+- Remote database on NAS (PostgreSQL) - Phase 7
+- Meal images/photos - Phase 7+
+- Analytics and insights - Phase 6-7
+
+## Quick Reminders
+- Always check DEVELOPMENT_PLAN.md when making architectural decisions
+- User will provide their own meal templates (no default data needed)
+- Portion sizes are flexible (any positive number)
+- The app should work offline with local database initially
