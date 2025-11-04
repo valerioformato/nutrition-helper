@@ -1,4 +1,4 @@
 // Repository module
 // Data access layer with CRUD operations
 
-pub mod mod_file_placeholder;
+// Repositories will be implemented in Phase 1

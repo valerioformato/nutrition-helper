@@ -53,6 +53,9 @@ Follow the phased approach in DEVELOPMENT_PLAN.md:
 - Keep business logic separate from Tauri command handlers
 - Use repository pattern for all database operations
 - Add #[derive(Serialize, Deserialize)] to models that cross IPC boundary
+- **Write comprehensive tests for all code** (unit + integration)
+- **Target 85%+ test coverage** for backend code
+- Include test modules inline with `#[cfg(test)]`
 
 ### TypeScript Frontend
 
@@ -61,6 +64,8 @@ Follow the phased approach in DEVELOPMENT_PLAN.md:
 - Use Tailwind utility classes for styling
 - Wrap Tauri commands in typed API functions (in `lib/api.ts`)
 - Keep components small and focused
+- **Write tests for utilities and components** (Phase 7)
+- **Target 70%+ test coverage** for frontend code
 
 ### Database
 
@@ -68,6 +73,45 @@ Follow the phased approach in DEVELOPMENT_PLAN.md:
 - Design schema to be compatible with both SQLite and PostgreSQL
 - Always use parameterized queries (never string concatenation)
 - Include timestamps (created_at, updated_at) on all tables
+- **Write tests for all database operations** (migrations, queries, constraints)
+
+### Testing Standards
+
+**Backend Testing (Required from Phase 1):**
+
+- Write unit tests for all business logic
+- Write integration tests for repository operations
+- Use temporary in-memory SQLite databases (`:memory:`)
+- Create test data builders for consistency
+- Test both happy paths and error cases
+- Run tests before committing: `cargo test`
+
+**Frontend Testing (Phase 7):**
+
+- Write unit tests for utilities and helpers
+- Write component tests for React components
+- Use Vitest + React Testing Library
+- Test user interactions and state changes
+- Run tests before committing: `npm test`
+
+**Test Organization:**
+
+```
+src-tauri/
+├── src/
+│   └── models/meal.rs       # Unit tests inline with #[cfg(test)]
+└── tests/
+    ├── integration/         # Integration tests
+    ├── db_tests/           # Database tests
+    └── helpers/            # Test utilities
+```
+
+**Test Naming:**
+
+- Use descriptive test names: `test_weekly_limit_enforced_correctly`
+- Follow Arrange-Act-Assert pattern
+- One logical assertion per test
+- Use `#[tokio::test]` for async tests
 
 ## File Organization
 
@@ -97,9 +141,13 @@ We are in Phase 0: Setting up the project scaffolding. Next steps will be buildi
 
 ## Development Workflow
 
+- **Test-Driven Development**: Write tests alongside or before implementation (from Phase 1)
+- **Run Tests Frequently**: Execute `cargo test` after every significant change
+- **Verify Coverage**: Ensure new code meets coverage targets before moving on
 - **Test Before Moving On**: After completing any task, ALWAYS ask the user to test the app before moving to the next task
 - Build incrementally and verify each step works
 - Don't proceed to new features until current ones are confirmed working
+- **All code must have tests** - no exceptions for backend code from Phase 1 onwards
 
 ## Platform-Specific Notes
 

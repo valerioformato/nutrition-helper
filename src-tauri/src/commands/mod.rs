@@ -1,4 +1,4 @@
 // Command handlers module
 // Tauri commands for IPC communication between frontend and backend
 
-pub mod mod_file_placeholder;
+// Commands will be implemented in Phase 1

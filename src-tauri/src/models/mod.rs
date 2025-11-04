@@ -1,4 +1,4 @@
 // Data models module
 // Rust structs representing database entities
 
-pub mod mod_file_placeholder;
+// Models will be implemented in Phase 1

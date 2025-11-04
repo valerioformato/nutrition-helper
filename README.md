@@ -34,6 +34,7 @@ Nutrition Helper allows you to:
 - [x] Architecture planning
 - [x] Technology stack decisions
 - [x] Development plan documentation
+- [x] **Comprehensive testing strategy defined**
 - [x] Tauri 2.0 project initialization
 - [x] React + TypeScript + Vite setup
 - [x] Tailwind CSS v3 configuration
@@ -48,6 +49,7 @@ Nutrition Helper allows you to:
 
 - [ ] Database schema creation (SQL migrations)
 - [ ] Database connection test
+- [ ] Testing infrastructure setup
 
 ## 🛠️ Setup Instructions
 
@@ -80,13 +82,79 @@ npm run tauri build
 
 The database will be automatically initialized on first run. SQLite database file will be stored in the app's data directory.
 
+### Running Tests
+
+**Backend Tests:**
+
+```bash
+# Run all Rust tests
+cargo test
+
+# Run with output
+cargo test -- --nocapture
+
+# Run specific test module
+cargo test meal_template
+
+# Run integration tests only
+cargo test --test integration
+```
+
+**Frontend Tests** (Phase 7):
+
+```bash
+# Run all frontend tests
+npm test
+
+# Run in watch mode
+npm test -- --watch
+
+# Run with coverage
+npm test -- --coverage
+```
+
+**Test Coverage:**
+
+```bash
+# Generate Rust coverage report (requires cargo-tarpaulin)
+cargo install cargo-tarpaulin
+cargo tarpaulin --out Html --output-dir coverage
+```
+
 ## 🎯 Development Workflow
 
 1. **Check Current Phase**: See DEVELOPMENT_PLAN.md for current phase objectives
 2. **Backend First**: Implement Rust backend (models, repository, Tauri commands)
-3. **Frontend Integration**: Build React components that use Tauri commands
-4. **Test**: Manual testing in dev mode
-5. **Update Plan**: Mark tasks complete in DEVELOPMENT_PLAN.md
+3. **Write Tests**: Comprehensive unit and integration tests (from Phase 1)
+4. **Verify Coverage**: Ensure tests meet coverage targets
+5. **Frontend Integration**: Build React components that use Tauri commands
+6. **Manual Testing**: Test in dev mode for UX validation
+7. **Update Plan**: Mark tasks complete in DEVELOPMENT_PLAN.md
+
+## 🧪 Testing Strategy
+
+We follow a **comprehensive testing approach** from Phase 1 onwards:
+
+### Backend Testing (Phase 1+)
+
+- ✅ **Unit Tests**: All models, business logic, and utilities (90%+ coverage)
+- ✅ **Integration Tests**: Repository operations with real database (85%+ coverage)
+- ✅ **Database Tests**: Schema, migrations, and constraints (100% coverage)
+
+### Frontend Testing (Phase 7)
+
+- ✅ **Unit Tests**: Utilities and helper functions (80%+ coverage)
+- ✅ **Component Tests**: React components in isolation (70%+ coverage)
+- ✅ **E2E Tests**: Critical user workflows (100% coverage)
+
+### Test Infrastructure
+
+- Tests use temporary SQLite databases for isolation
+- Automated test data builders for consistency
+- Fast execution (tests run in < 10 seconds)
+- Coverage reports generated automatically
+
+See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) Section 9 for detailed testing guidelines.
 
 ## 📁 Project Structure
 
@@ -172,6 +240,8 @@ See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for detailed phase breakdown.
 - Meal entries are snapshots (editing templates doesn't affect past entries)
 - Database is designed to be backend-agnostic for future PostgreSQL migration
 - No default meal templates; user provides their own nutrition plan
+- **Comprehensive testing required** - all code must have tests before merging
+- Test coverage targets: Backend 85%+, Frontend 70%+, Critical paths 100%
 
 ## 🤝 Contributing
 

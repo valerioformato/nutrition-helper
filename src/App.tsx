@@ -3,7 +3,9 @@ import { useState } from "react";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
+  const [dbMsg, setDbMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [dbLoading, setDbLoading] = useState(false);
 
   async function testBackend() {
     setLoading(true);
@@ -17,6 +19,18 @@ function App() {
     }
   }
 
+  async function testDatabase() {
+    setDbLoading(true);
+    try {
+      const response = await invoke<string>("test_database");
+      setDbMsg(response);
+    } catch (error) {
+      setDbMsg(`Database Error: ${error}`);
+    } finally {
+      setDbLoading(false);
+    }
+  }
+
   return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">
             <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
@@ -24,7 +38,10 @@ function App() {
                     Nutrition Helper
                 </h1>
                 <p className="text-gray-600 mb-6">
-                    Your meal planning companion - Phase 0 Setup Complete! 🎉
+                    Your meal planning companion - Phase 0 Complete! 🎉
+                </p>
+                <p className="text-sm text-gray-500 mb-6">
+                    Database initialized with SQLite. Comprehensive testing strategy in place.
                 </p>
 
                 <div className="space-y-4">
@@ -43,12 +60,34 @@ function App() {
                         </div>
                     )}
 
+                    {dbMsg && (
+                        <div className={`p-4 rounded-md border ${
+                            dbMsg.includes("Error") 
+                                ? "bg-red-50 border-red-200" 
+                                : "bg-green-50 border-green-200"
+                        }`}>
+                            <p className={`text-sm ${
+                                dbMsg.includes("Error") ? "text-red-700" : "text-green-700"
+                            }`}>
+                                {dbMsg}
+                            </p>
+                        </div>
+                    )}
+
                     <button
                         onClick={testBackend}
                         disabled={loading}
                         className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? "Testing..." : "Test Backend Communication"}
+                    </button>
+
+                    <button
+                        onClick={testDatabase}
+                        disabled={dbLoading}
+                        className="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {dbLoading ? "Testing..." : "Test Database Connection"}
                     </button>
                 </div>
             </div>

@@ -333,7 +333,7 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 
 ### Phase 0: Project Setup & Scaffolding ✓ (95% COMPLETED)
 
-**Goal**: Get development environment ready
+**Goal**: Get development environment ready with comprehensive testing infrastructure
 
 - [x] Initialize Tauri project with React + TypeScript
 - [x] Set up Tailwind CSS and UI component library
@@ -345,16 +345,24 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 - [x] Verify IPC communication works
 - [x] Generate app icons
 - [x] Document Linux graphics workaround
+- [ ] Document comprehensive testing strategy
+- [ ] Add testing dependencies (dev-dependencies)
 
-**Deliverable**: Running "Hello World" Tauri app with IPC communication tested
+**Testing Setup:**
 
-**Status**: Basic scaffolding complete. Database schema creation in progress.
+- Backend testing tools: tokio-test, tempfile (for test databases)
+- Frontend testing tools: Vitest, React Testing Library (Phase 7)
+- Test structure and conventions documented
+
+**Deliverable**: Running "Hello World" Tauri app with IPC communication tested and testing infrastructure ready
+
+**Status**: Basic scaffolding complete. Database schema creation and testing documentation in progress.
 
 ---
 
 ### Phase 1: Core Data Layer (Week 1-2)
 
-**Goal**: Build the backend foundation
+**Goal**: Build the backend foundation with comprehensive test coverage
 
 **Backend Tasks:**
 
@@ -366,7 +374,36 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
   - Get meal entries by date range
   - Create/Update/Delete meal entries
 - [ ] Add weekly limit validation logic
-- [ ] Write unit tests for business logic
+
+**Testing Tasks (Comprehensive Approach):**
+
+- [ ] Write unit tests for data models
+  - Model validation logic
+  - Enum conversions and serialization
+  - Business rule validation
+- [ ] Write integration tests for repository layer
+  - CRUD operations with test database
+  - Query accuracy (date ranges, filtering)
+  - Transaction handling
+  - Error cases (foreign keys, constraints)
+- [ ] Write tests for database layer
+  - Schema creation and migrations
+  - Index functionality
+  - View queries (weekly_meal_usage)
+  - SQLite-specific behavior
+- [ ] Write tests for business logic services
+  - Weekly limit calculation
+  - Week start validation (Monday)
+  - Meal slot ordering
+  - Location-based filtering
+- [ ] Write tests for Tauri commands
+  - IPC serialization/deserialization
+  - Error handling and propagation
+  - Command parameter validation
+- [ ] Set up test utilities and helpers
+  - Test database factory
+  - Mock data builders
+  - Common assertions
 
 **Frontend Tasks:**
 
@@ -374,7 +411,9 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 - [ ] Create API client wrapper for Tauri commands
 - [ ] Set up state management structure
 
-**Deliverable**: Backend API that can create and retrieve meals
+**Test Coverage Goal:** 85%+ for backend code
+
+**Deliverable**: Fully tested backend API that can create and retrieve meals with confidence
 
 ---
 
@@ -677,9 +716,53 @@ When we initialize the project, we'll:
 
 ### Testing Strategy
 
-- **Backend**: Unit tests for business logic, integration tests for DB operations
-- **Frontend**: Component tests with React Testing Library (Phase 7)
-- **E2E**: Manual testing initially, consider Playwright later
+**Comprehensive Testing Approach:**
+
+We adopt a rigorous testing strategy from Phase 1 onwards to ensure code quality, maintainability, and confidence in the application.
+
+**Backend Testing (Phase 1+):**
+
+- **Unit Tests**: All business logic, models, and utility functions
+  - Inline tests using `#[cfg(test)]` modules
+  - Fast, isolated tests with no dependencies
+  - Target: 90%+ coverage for models and services
+- **Integration Tests**: Repository and database operations
+  - Located in `src-tauri/tests/` directory
+  - Use temporary SQLite databases for isolation
+  - Test real database interactions, queries, and transactions
+  - Target: 85%+ coverage for repository layer
+- **Database Tests**: Schema, migrations, and constraints
+  - Verify migrations apply correctly
+  - Test foreign keys, indexes, and views
+  - Validate data integrity rules
+
+**Frontend Testing (Phase 7):**
+
+- **Unit Tests**: Utility functions, helpers, and store logic
+  - Tool: Vitest (fast, Vite-native)
+  - Target: 80%+ coverage for utilities
+- **Component Tests**: React components in isolation
+  - Tool: React Testing Library + Vitest
+  - Test rendering, interactions, and state changes
+  - Target: 70%+ coverage for components
+- **E2E Tests**: Complete user workflows
+  - Tool: Playwright or Tauri testing utilities
+  - Test critical paths (add meal, weekly planning, template management)
+  - Target: 100% coverage for critical user journeys
+
+**Test Infrastructure:**
+
+- Automated tests run before commits (git hooks)
+- CI/CD pipeline runs full test suite (Phase 7)
+- Code coverage reports generated automatically
+- Test databases are isolated and cleaned between tests
+
+**Testing Tools:**
+
+- **Backend**: tokio-test, tempfile, sqlx testing features
+- **Frontend**: Vitest, @testing-library/react, @testing-library/jest-dom
+- **E2E**: Playwright
+- **Coverage**: cargo-tarpaulin (Rust), vitest coverage (TypeScript)
 
 ### Code Review Checkpoints
 
@@ -689,7 +772,231 @@ When we initialize the project, we'll:
 
 ---
 
-## 9. Open Questions & Decisions Needed
+## 9. Testing Guidelines & Best Practices
+
+### 9.1 Backend Testing Standards
+
+**Test Organization:**
+
+```
+src-tauri/
+├── src/
+│   ├── models/
+│   │   └── meal_template.rs  # Unit tests inline with #[cfg(test)]
+│   ├── services/
+│   │   └── meal_service.rs   # Unit tests inline
+│   └── repository/
+│       └── meal_repo.rs      # Unit tests for pure logic
+└── tests/
+    ├── integration/
+    │   ├── repository_tests.rs
+    │   └── command_tests.rs
+    ├── db_tests/
+    │   ├── migrations_test.rs
+    │   └── schema_test.rs
+    └── helpers/
+        ├── mod.rs
+        ├── test_db.rs        # Test database utilities
+        └── fixtures.rs       # Test data builders
+```
+
+**Writing Backend Tests:**
+
+```rust
+// Unit Test Example (inline)
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_meal_category_from_string() {
+        assert_eq!(MealCategory::from_str("breakfast").unwrap(), MealCategory::Breakfast);
+    }
+
+    #[test]
+    fn test_weekly_limit_validation() {
+        let limit = Some(2);
+        assert!(validate_weekly_limit(limit, 1));
+        assert!(!validate_weekly_limit(limit, 3));
+    }
+}
+
+// Integration Test Example (tests/ directory)
+#[tokio::test]
+async fn test_create_meal_template() {
+    let db = create_test_database().await;
+    let repo = MealTemplateRepository::new(db);
+
+    let template = MealTemplate {
+        name: "Test Meal".to_string(),
+        category: MealCategory::Breakfast,
+        // ... other fields
+    };
+
+    let id = repo.create(template).await.unwrap();
+    assert!(id > 0);
+
+    let retrieved = repo.get_by_id(id).await.unwrap();
+    assert_eq!(retrieved.name, "Test Meal");
+}
+```
+
+**Test Database Utilities:**
+
+```rust
+// tests/helpers/test_db.rs
+pub async fn create_test_database() -> SqlitePool {
+    let pool = SqlitePool::connect(":memory:").await.unwrap();
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    pool
+}
+
+pub fn create_test_meal_template() -> MealTemplate {
+    MealTemplate {
+        id: None,
+        name: "Test Breakfast".to_string(),
+        category: MealCategory::Breakfast,
+        location_type: LocationType::Home,
+        weekly_limit: Some(2),
+        tags: vec!["test".to_string()],
+        // ... other fields with sensible defaults
+    }
+}
+```
+
+### 9.2 Frontend Testing Standards (Phase 7)
+
+**Test Organization:**
+
+```
+src/
+├── components/
+│   └── meals/
+│       ├── MealCard.tsx
+│       └── MealCard.test.tsx
+├── lib/
+│   ├── utils.ts
+│   └── utils.test.ts
+└── __tests__/
+    ├── integration/
+    └── e2e/
+```
+
+**Writing Frontend Tests:**
+
+```typescript
+// Unit Test Example
+import { describe, it, expect } from "vitest";
+import { calculateWeekStart } from "./utils";
+
+describe("Date utilities", () => {
+  it("calculates week start as Monday", () => {
+    const thursday = new Date("2025-11-06");
+    const weekStart = calculateWeekStart(thursday);
+    expect(weekStart.getDay()).toBe(1); // Monday
+    expect(weekStart.getDate()).toBe(3); // Nov 3rd
+  });
+});
+
+// Component Test Example
+import { render, screen, fireEvent } from "@testing-library/react";
+import { MealCard } from "./MealCard";
+
+describe("MealCard", () => {
+  it("renders meal information", () => {
+    const meal = createTestMeal();
+    render(<MealCard meal={meal} />);
+
+    expect(screen.getByText("Oatmeal")).toBeInTheDocument();
+    expect(screen.getByText("Home")).toBeInTheDocument();
+  });
+
+  it("calls onClick when clicked", () => {
+    const handleClick = vi.fn();
+    const meal = createTestMeal();
+    render(<MealCard meal={meal} onClick={handleClick} />);
+
+    fireEvent.click(screen.getByRole("button"));
+    expect(handleClick).toHaveBeenCalledWith(meal);
+  });
+});
+```
+
+### 9.3 Test Coverage Goals
+
+| Component           | Target Coverage | Priority |
+| ------------------- | --------------- | -------- |
+| Backend Models      | 90%+            | Critical |
+| Backend Repository  | 85%+            | Critical |
+| Backend Services    | 85%+            | Critical |
+| Backend Commands    | 80%+            | High     |
+| Database Schema     | 100%            | Critical |
+| Frontend Utils      | 80%+            | High     |
+| Frontend Components | 70%+            | Medium   |
+| Frontend Stores     | 75%+            | High     |
+| E2E Critical Paths  | 100%            | Critical |
+
+### 9.4 Running Tests
+
+**Backend Tests:**
+
+```bash
+# Run all tests
+cargo test
+
+# Run with output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_meal_template
+
+# Run integration tests only
+cargo test --test integration
+
+# Run with coverage (requires cargo-tarpaulin)
+cargo tarpaulin --out Html
+```
+
+**Frontend Tests (Phase 7):**
+
+```bash
+# Run all tests
+npm test
+
+# Run in watch mode
+npm test -- --watch
+
+# Run with coverage
+npm test -- --coverage
+
+# Run specific test file
+npm test MealCard.test.tsx
+```
+
+### 9.5 Testing Principles
+
+1. **Test Behavior, Not Implementation**: Focus on what the code does, not how
+2. **Arrange-Act-Assert**: Structure tests clearly with setup, action, and verification
+3. **One Assertion Per Concept**: Each test should verify one logical concept
+4. **Fast and Isolated**: Tests should run quickly and not depend on each other
+5. **Descriptive Names**: Test names should clearly describe what they verify
+6. **Test the Happy Path and Edge Cases**: Cover normal usage and error conditions
+7. **Use Test Data Builders**: Create reusable functions for test data
+8. **Clean Up After Tests**: Ensure tests don't leave artifacts or state
+
+### 9.6 Continuous Integration (Phase 7)
+
+**GitHub Actions Workflow:**
+
+- Run tests on every push and PR
+- Generate coverage reports
+- Fail build if coverage drops below threshold
+- Run clippy (Rust linter) and TypeScript checks
+- Test on multiple platforms (Windows, macOS, Linux)
+
+---
+
+## 10. Open Questions & Decisions Needed
 
 ### Decisions Made:
 
@@ -723,14 +1030,15 @@ When we initialize the project, we'll:
 
 ---
 
-## 10. Success Metrics
+## 11. Success Metrics
 
 ### Phase Completion Criteria:
 
 - ✅ All phase tasks completed
 - ✅ No critical bugs
 - ✅ Code reviewed and refactored
-- ✅ Basic testing passed
+- ✅ **Comprehensive tests written and passing**
+- ✅ **Test coverage meets phase targets**
 - ✅ Documentation updated
 
 ### Final Release Criteria:
@@ -741,10 +1049,14 @@ When we initialize the project, we'll:
 - Data persists between app restarts
 - Intuitive UX (minimal learning curve)
 - Stable (no crashes in normal usage)
+- **80%+ overall test coverage achieved**
+- **All critical user paths covered by E2E tests**
+- **No known security vulnerabilities**
+- **Performance meets targets (< 100ms for common operations)**
 
 ---
 
-## Next Steps
+## 12. Next Steps
 
 Now that we have this plan, we can:
 
