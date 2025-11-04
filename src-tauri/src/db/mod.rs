@@ -107,7 +107,7 @@ mod tests {
             table_names.contains(&"meal_option_tags".to_string()),
             "meal_option_tags junction table not found"
         );
-        
+
         // Should have exactly 5 tables
         assert_eq!(
             table_names.len(),
@@ -173,7 +173,7 @@ mod tests {
         // Verify both views exist (meal usage + tag usage)
         assert!(view_names.contains(&"weekly_meal_usage".to_string()));
         assert!(view_names.contains(&"weekly_tag_usage".to_string()));
-        
+
         // Should have exactly 2 views
         assert_eq!(
             view_names.len(),

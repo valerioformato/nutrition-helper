@@ -54,18 +54,18 @@ CREATE TABLE IF NOT EXISTS meal_option_tags (
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
--- Level 4: Meal Entries (actual meal options logged/consumed)
--- This is when the user logs which specific option they chose on a given date/slot
+-- Level 4: Meal Entries (meal planning and logging)
+-- This tracks both planned meals (future) and logged meals (past/completed)
+-- User can plan meals in advance, then mark them as completed when eaten
 CREATE TABLE IF NOT EXISTS meal_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     meal_option_id INTEGER NOT NULL,
     date DATE NOT NULL,
     slot_type TEXT NOT NULL CHECK(slot_type IN ('breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner')),
     location TEXT NOT NULL CHECK(location IN ('home', 'office', 'restaurant', 'any')),
-    portion_size REAL CHECK(portion_size IS NULL OR portion_size > 0),
-    portion_unit TEXT,
+    servings REAL NOT NULL DEFAULT 1.0 CHECK(servings > 0), -- Nutrition plan uses strict serving sizes
     notes TEXT,
-    completed BOOLEAN NOT NULL DEFAULT 0,
+    completed BOOLEAN NOT NULL DEFAULT 0, -- FALSE = planned, TRUE = actually consumed
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (meal_option_id) REFERENCES meal_options(id) ON DELETE RESTRICT
