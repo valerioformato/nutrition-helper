@@ -1,5 +1,20 @@
 # GitHub Copilot Instructions for Nutrition Helper
 
+## Current Status
+
+**Phase: 0 Complete ✅ | Ready to Start: Phase 1**
+
+- Database schema finalized (5 tables, 9 indexes, 2 views)
+- All 5 database tests passing
+- Schema reviewed with user and refined based on real nutrition plan
+- Key decisions documented (servings-based portions, planning+logging workflow, Monday weeks)
+- Next: Build core data layer (models, repositories, Tauri commands)
+
+**Recent Changes:**
+- Commit 2486bce (2024-11-04): Schema refinements (servings field, planning/logging clarification)
+- Commit 18fb35a (2024-11-04): Tags system with hierarchies
+- Commit db5e4c8: 4-level hierarchy correction
+
 ## Project Context
 
 This is a Tauri-based desktop application for managing daily nutrition plans with meal tracking. Always refer to `DEVELOPMENT_PLAN.md` for complete architecture details and development phases.
@@ -23,7 +38,7 @@ This is a Tauri-based desktop application for managing daily nutrition plans wit
    - **Templates**: Meal cards that can fill slots (the "Oppure" choices in nutrition plans)
    - **Options**: Ingredient/variation choices within templates (e.g., "philadelphia", "ricotta", "crema spalmabile")
    - **Entries**: Actual logged meal options (snapshot of which option was chosen at specific date/slot)
-4. **Real-world example**: 
+4. **Real-world example**:
    - Slot: COLAZIONE → Template: "Pane con marmellata" → Options: ["philadelphia", "ricotta", "crema spalmabile"] → Entry: logged "ricotta" on 2024-11-04
 5. **Dual Navigation**: Slot-first (plan by slot) and template-first (search for specific template)
 
@@ -31,7 +46,12 @@ This is a Tauri-based desktop application for managing daily nutrition plans wit
 
 - **Weeks start on Monday** for weekly limit calculations
 - **Entries are snapshots**: Editing a template does NOT affect past meal entries
-- **Weekly limits**: Some meals are limited to 1-2 times per week
+- **Weekly frequency suggestions**: Soft recommendations (show warnings), not hard limits
+- **Tags system**: Relational tags with hierarchies (e.g., pasta_integrale → pasta)
+  - Tags must exist in database before use (no typos)
+  - Multiple tags per meal option
+  - Parent/child relationships for ingredient hierarchies
+  - Weekly suggestions tracked per tag
 - **Location-aware**: Meals have different options for Home/Office/Restaurant
 - **Database agnostic**: Write queries that work with both SQLite and PostgreSQL
 

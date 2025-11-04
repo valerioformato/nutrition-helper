@@ -85,6 +85,7 @@ This allows users to:
 4. Log actual meals consumed or planned (Entries)
 
 **Real-world example:**
+
 - **Slot**: COLAZIONE (Breakfast)
 - **Template 1**: "Pane con marmellata e formaggio spalmabile" (Oppure)
 - **Template 2**: "Pane con affettato/formaggio/uovo" (Oppure)
@@ -161,6 +162,7 @@ struct MealOption {
 #### MealEntry (Level 4)
 
 An actual meal option logged/consumed (links an option to a date/slot).
+Supports both meal planning (future dates) and meal logging (past/completed meals).
 
 ```rust
 struct MealEntry {
@@ -168,12 +170,11 @@ struct MealEntry {
     meal_option_id: i32,             // Foreign key to MealOption
     date: Date,
     slot_type: SlotType,             // Which slot this meal fills
-    location: LocationType,          // Where it was eaten (can override option's default)
-    portion_size: Option<f32>,       // e.g., 1.0 = normal, 1.5 = large
-    portion_unit: Option<String>,    // e.g., "grams", "cups", "servings"
+    location: LocationType,          // Where it was eaten
+    servings: f32,                   // Number of servings (default 1.0)
+                                     // Nutrition plan uses strict serving sizes
     notes: Option<String>,
-    completed: bool,                 // planned vs actually eaten
-    timestamp: DateTime,
+    completed: bool,                 // FALSE = planned, TRUE = actually consumed
     created_at: DateTime,
     updated_at: DateTime,
 }
@@ -238,10 +239,60 @@ enum SlotType {
 
 ```
 Template (1) ──────> (many) Option (1) ──────> (many) Entry
-   "Salads"              "Chicken Caesar"           "Nov 4, Lunch"
-                         "Greek Salad"              "Nov 5, Dinner"
-                         "Cobb Salad"
+   "Pane con"            "philadelphia"           "Nov 4, Breakfast"
+   marmellata"           "ricotta"                "Nov 5, Breakfast"
+                         "crema spalmabile"
 ```
+
+### 2.4 Tags System for Ingredient Tracking
+
+The application uses a **relational tags system** to track ingredients and enforce weekly frequency suggestions:
+
+#### Tag Entity
+
+```rust
+struct Tag {
+    id: i32,
+    name: String,                    // Internal: "pasta", "pasta_integrale", "ricotta"
+    display_name: String,            // User-facing: "Pasta", "Pasta Integrale", "Ricotta"
+    category: TagCategory,           // ingredient, dietary, prep_time, other
+    weekly_suggestion: Option<i32>,  // Suggested frequency (not enforced)
+    parent_tag_id: Option<i32>,      // For hierarchies: pasta_integrale -> pasta
+    created_at: DateTime,
+}
+
+enum TagCategory {
+    Ingredient,   // pasta, ricotta, eggs
+    Dietary,      // vegetarian, vegan, gluten-free
+    PrepTime,     // quick_prep, slow_cook
+    Other,        // custom tags
+}
+```
+
+**Key Features:**
+
+1. **No Typos**: Tags must exist in database before use (referential integrity)
+2. **Hierarchies**: Child tags (pasta_integrale) can reference parent tags (pasta)
+3. **Soft Suggestions**: Weekly suggestions are recommendations, not hard limits
+4. **Multiple Tags**: Each meal option can have many tags
+5. **Categories**: Separate ingredient tracking from dietary/prep classifications
+
+**Example Tag Hierarchy:**
+
+```
+pasta (weekly_suggestion: 3)
+  └── pasta_integrale (weekly_suggestion: 2, parent: pasta)
+
+// If user eats pasta_integrale:
+// - Counts toward "pasta_integrale": 1/2
+// - Also counts toward "pasta": 1/3
+```
+
+**Weekly Frequency Tracking:**
+
+- `weekly_tag_usage` view tracks tag usage per week
+- Frontend displays warnings when approaching suggestions
+- User can proceed despite warnings (soft enforcement)
 
 ### 2.4 Database Schema (SQLite)
 
@@ -272,17 +323,17 @@ CREATE TABLE meal_options (
     FOREIGN KEY (template_id) REFERENCES meal_templates(id) ON DELETE CASCADE
 );
 
--- Level 3: Meal Entries (actual logged meals)
+-- Level 4: Meal Entries (meal planning and logging)
+-- Supports both planned meals (future) and logged meals (past/completed)
 CREATE TABLE meal_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     meal_option_id INTEGER NOT NULL,
     date DATE NOT NULL,
     slot_type TEXT NOT NULL, -- 'breakfast', 'morning_snack', 'lunch', etc.
     location TEXT NOT NULL,
-    portion_size REAL,
-    portion_unit TEXT,
+    servings REAL NOT NULL DEFAULT 1.0, -- Nutrition plan uses strict serving sizes
     notes TEXT,
-    completed BOOLEAN DEFAULT FALSE,
+    completed BOOLEAN DEFAULT FALSE, -- FALSE = planned, TRUE = consumed
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (meal_option_id) REFERENCES meal_options(id) ON DELETE RESTRICT
@@ -411,7 +462,7 @@ CREATE INDEX idx_meal_options_category ON meal_options(category);
 5. User browses and clicks "Breakfast Bowls" template
 6. Modal shows options: "Oatmeal with Berries", "Greek Yogurt Bowl", "Granola Bowl"
 7. User selects "Oatmeal with Berries" (shows Office location, compatible with Breakfast slot)
-8. Adjusts portion to 1.2 servings
+8. Adjusts servings to 1.2 (nutrition plan uses strict serving sizes, default is 1.0)
 9. Adds note: "Extra blueberries"
 10. Saves → card appears in breakfast slot showing "Oatmeal with Berries" from "Breakfast Bowls"
 
