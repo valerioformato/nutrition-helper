@@ -86,7 +86,7 @@ mod tests {
 
         let table_names: Vec<String> = tables.into_iter().map(|(name,)| name).collect();
 
-        // Verify all three core tables exist (3-level hierarchy)
+        // Verify all core tables exist (4-level hierarchy + tags system)
         assert!(
             table_names.contains(&"meal_templates".to_string()),
             "meal_templates table not found"
@@ -98,6 +98,22 @@ mod tests {
         assert!(
             table_names.contains(&"meal_entries".to_string()),
             "meal_entries table not found"
+        );
+        assert!(
+            table_names.contains(&"tags".to_string()),
+            "tags table not found"
+        );
+        assert!(
+            table_names.contains(&"meal_option_tags".to_string()),
+            "meal_option_tags junction table not found"
+        );
+        
+        // Should have exactly 5 tables
+        assert_eq!(
+            table_names.len(),
+            5,
+            "Expected 5 tables, found: {:?}",
+            table_names
         );
     }
 
@@ -124,9 +140,18 @@ mod tests {
         assert!(index_names.contains(&"idx_meal_entries_date_slot".to_string()));
         assert!(index_names.contains(&"idx_meal_options_template".to_string()));
         assert!(index_names.contains(&"idx_meal_templates_location".to_string()));
-        
-        // Should have exactly 5 indexes
-        assert_eq!(index_names.len(), 5, "Expected 5 indexes, found: {:?}", index_names);
+        assert!(index_names.contains(&"idx_tags_category".to_string()));
+        assert!(index_names.contains(&"idx_tags_parent".to_string()));
+        assert!(index_names.contains(&"idx_meal_option_tags_option".to_string()));
+        assert!(index_names.contains(&"idx_meal_option_tags_tag".to_string()));
+
+        // Should have exactly 9 indexes (5 original + 4 for tags system)
+        assert_eq!(
+            index_names.len(),
+            9,
+            "Expected 9 indexes, found: {:?}",
+            index_names
+        );
     }
 
     #[tokio::test]
@@ -145,7 +170,16 @@ mod tests {
 
         let view_names: Vec<String> = views.into_iter().map(|(name,)| name).collect();
 
-        // Verify view exists
+        // Verify both views exist (meal usage + tag usage)
         assert!(view_names.contains(&"weekly_meal_usage".to_string()));
+        assert!(view_names.contains(&"weekly_tag_usage".to_string()));
+        
+        // Should have exactly 2 views
+        assert_eq!(
+            view_names.len(),
+            2,
+            "Expected 2 views, found: {:?}",
+            view_names
+        );
     }
 }
