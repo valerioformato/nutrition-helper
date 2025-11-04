@@ -17,9 +17,13 @@ This is a Tauri-based desktop application for managing daily nutrition plans wit
 ### Key Design Patterns
 
 1. **Repository Pattern**: Abstract database operations to support multiple DB backends
-2. **Card-Based UI**: Meal options are visual cards that fill meal slots
-3. **Template vs Entry**: MealTemplates are reusable options, MealEntries are actual logged meals
+2. **Card-Based UI**: Meal templates (categories) are visual cards that contain meal options
+3. **Three-Level Hierarchy**: Template → Option → Entry
+   - **Templates**: Meal categories/groups (e.g., "Salads", "Soups")
+   - **Options**: Individual meals within templates (e.g., "Chicken Caesar" within "Salads")
+   - **Entries**: Actual logged meals (snapshot of option at specific date/slot)
 4. **Slot-Based Planning**: 5 fixed meal slots per day (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner)
+5. **Dual Navigation**: Slot-first (plan by slot) and meal-first (search for specific meal)
 
 ### Important Rules
 

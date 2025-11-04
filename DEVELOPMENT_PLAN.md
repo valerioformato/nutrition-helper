@@ -71,55 +71,83 @@ A Tauri-based desktop application for managing daily nutrition plans with meal t
 
 ## 2. Data Model
 
-### 2.1 Core Entities
+### 2.1 Three-Level Hierarchy
 
-#### MealTemplate
+The application uses a **three-level data model** to provide maximum flexibility:
 
-Represents the blueprint for a meal option that can be selected.
+**Template → Option → Entry**
+
+This allows users to:
+1. Organize meals into categories/groups (Templates)
+2. Define specific meal choices within those groups (Options)
+3. Log actual meals consumed or planned (Entries)
+
+### 2.2 Core Entities
+
+#### MealTemplate (Level 1)
+
+Represents a category or group of related meals (the "card" in the UI).
 
 ```rust
 struct MealTemplate {
     id: i32,
-    name: String,
+    name: String,                    // e.g., "Salads", "Soups", "Pasta Dishes"
     description: Option<String>,
-    category: MealCategory, // Breakfast, Lunch, Dinner, Snack
-    location_type: LocationType, // Home, Office, Restaurant, Any
-    weekly_limit: Option<i32>, // null = unlimited, 1 = once per week, etc.
-    nutritional_notes: Option<String>,
-    tags: Vec<String>, // e.g., ["protein-rich", "vegetarian", "quick"]
+    tags: Vec<String>,               // e.g., ["vegetarian", "quick-prep"]
     created_at: DateTime,
     updated_at: DateTime,
 }
 ```
 
-#### MealSlot
+**Examples:**
+- "Breakfast Bowls"
+- "Lunch Salads"
+- "Dinner Proteins"
+- "Snacks"
 
-A specific time slot in a day that needs to be filled.
+#### MealOption (Level 2)
+
+Represents an individual meal within a template.
 
 ```rust
-struct MealSlot {
+struct MealOption {
     id: i32,
-    date: Date,
-    slot_type: SlotType, // Breakfast, MorningSnack, Lunch, AfternoonSnack, Dinner
-    order: i32, // Display order in the day
+    template_id: i32,                // Foreign key to MealTemplate
+    name: String,                    // e.g., "Chicken Caesar Salad"
+    description: Option<String>,
+    category: MealCategory,          // Breakfast, Lunch, Dinner, Snack
+    location_type: LocationType,     // Home, Office, Restaurant, Any
+    weekly_limit: Option<i32>,       // null = unlimited, 1 = once per week, etc.
+    nutritional_notes: Option<String>,
+    compatible_slots: Vec<SlotType>, // Which meal slots can this option fill?
+    created_at: DateTime,
+    updated_at: DateTime,
 }
 ```
 
-#### MealEntry
+**Examples within "Lunch Salads" template:**
+- "Chicken Caesar" (Office, Lunch only, 2x/week)
+- "Greek Salad" (Home, Lunch+Dinner, unlimited)
+- "Cobb Salad" (Restaurant, Lunch only, 1x/week)
 
-An actual meal that was consumed/planned (links a template to a slot).
+#### MealEntry (Level 3)
+
+An actual meal that was consumed or planned (links an option to a date/slot).
 
 ```rust
 struct MealEntry {
     id: i32,
-    meal_slot_id: i32,
-    meal_template_id: i32,
-    location: LocationType,
-    portion_size: Option<f32>, // e.g., 1.0 = normal, 1.5 = large
-    portion_unit: Option<String>, // e.g., "grams", "cups", "servings"
+    meal_option_id: i32,             // Foreign key to MealOption
+    date: Date,
+    slot_type: SlotType,             // Which slot this meal fills
+    location: LocationType,          // Where it was eaten (can override option's default)
+    portion_size: Option<f32>,       // e.g., 1.0 = normal, 1.5 = large
+    portion_unit: Option<String>,    // e.g., "grams", "cups", "servings"
     notes: Option<String>,
+    completed: bool,                 // planned vs actually eaten
     timestamp: DateTime,
-    completed: bool, // planned vs actually eaten
+    created_at: DateTime,
+    updated_at: DateTime,
 }
 ```
 
@@ -149,29 +177,75 @@ enum SlotType {
 }
 ```
 
-### 2.2 Database Schema (SQLite)
+### 2.3 Key Features of This Model
+
+**Flexibility:**
+- Templates group related meals logically
+- Options can specify which slots they're compatible with
+- Easy to add new options without restructuring
+
+**Use Cases Supported:**
+
+1. **Slot-First Planning** (traditional):
+   - Click empty "Lunch" slot
+   - Browse templates (categories)
+   - Select specific option
+   - Log the meal
+
+2. **Meal-First Search** (new):
+   - Search "I want soup"
+   - App shows all soup options across templates
+   - App indicates which slots each option can fill
+   - User selects slot and logs the meal
+
+3. **Weekly Limit Tracking:**
+   - Limits apply per option (e.g., "Chicken Caesar max 2x/week")
+   - Can track usage across the entire template if needed
+   - View enforces counts based on completed entries
+
+**Relationships:**
+```
+Template (1) ──────> (many) Option (1) ──────> (many) Entry
+   "Salads"              "Chicken Caesar"           "Nov 4, Lunch"
+                         "Greek Salad"              "Nov 5, Dinner"
+                         "Cobb Salad"
+```
+
+### 2.4 Database Schema (SQLite)
 
 ```sql
--- Meal Templates (meal options available to choose from)
+-- Level 1: Meal Templates (categories/groups)
 CREATE TABLE meal_templates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    tags TEXT, -- JSON array
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Level 2: Meal Options (individual meals)
+CREATE TABLE meal_options (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    template_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
     category TEXT NOT NULL, -- 'breakfast', 'lunch', 'dinner', 'snack'
     location_type TEXT NOT NULL, -- 'home', 'office', 'restaurant', 'any'
     weekly_limit INTEGER, -- NULL for unlimited
     nutritional_notes TEXT,
-    tags TEXT, -- JSON array
+    compatible_slots TEXT NOT NULL, -- JSON array of slot types
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (template_id) REFERENCES meal_templates(id) ON DELETE CASCADE
 );
 
--- Meal Entries (actual meals consumed/planned)
+-- Level 3: Meal Entries (actual logged meals)
 CREATE TABLE meal_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meal_option_id INTEGER NOT NULL,
     date DATE NOT NULL,
     slot_type TEXT NOT NULL, -- 'breakfast', 'morning_snack', 'lunch', etc.
-    meal_template_id INTEGER NOT NULL,
     location TEXT NOT NULL,
     portion_size REAL,
     portion_unit TEXT,
@@ -179,23 +253,24 @@ CREATE TABLE meal_entries (
     completed BOOLEAN DEFAULT FALSE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (meal_template_id) REFERENCES meal_templates(id)
+    FOREIGN KEY (meal_option_id) REFERENCES meal_options(id) ON DELETE RESTRICT
 );
 
 -- Weekly usage tracking (for enforcing limits)
 CREATE VIEW weekly_meal_usage AS
 SELECT
-    meal_template_id,
+    meal_option_id,
     strftime('%Y-%W', date) as week,
     COUNT(*) as usage_count
 FROM meal_entries
 WHERE completed = TRUE
-GROUP BY meal_template_id, week;
+GROUP BY meal_option_id, week;
 
 -- Indexes for performance
 CREATE INDEX idx_meal_entries_date ON meal_entries(date);
-CREATE INDEX idx_meal_entries_template ON meal_entries(meal_template_id);
-CREATE INDEX idx_meal_templates_category ON meal_templates(category);
+CREATE INDEX idx_meal_entries_option ON meal_entries(meal_option_id);
+CREATE INDEX idx_meal_options_template ON meal_options(template_id);
+CREATE INDEX idx_meal_options_category ON meal_options(category);
 ```
 
 ---
@@ -217,20 +292,39 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
   - Location badges (home icon, office icon, restaurant icon)
   - Weekly limit indicator (e.g., "1/2 this week" badge)
 
-#### 2. **Meal Selection Modal**
+#### 2. **Meal Selection Modal (Two-Level Navigation)**
 
-- **Search & Filter**:
-  - Search bar (by meal name)
-  - Filter by location type
-  - Filter by category
+**Step 1: Template Selection**
+- **Layout**: Grid of template cards
+- **Content**: Template names with preview of options count
+- **Filters**:
   - Filter by tags
-- **Card Grid**:
-  - Visual cards with meal name, description, tags
-  - Disabled state for weekly-limited meals that are exhausted
-  - "Quick add" button on each card
-- **Smart Suggestions**:
-  - Prioritize meals that fit current slot type and haven't been used recently
-  - Show "Frequently chosen" section
+  - Show only templates with compatible options for current slot
+- **Search**: Search across template and option names
+
+**Step 2: Option Selection** (after clicking a template)
+- **Layout**: List or grid of meal options within selected template
+- **Content**: 
+  - Option name, description
+  - Location badge (home/office/restaurant)
+  - Compatibility indicator (which slots this option can fill)
+  - Weekly limit indicator (e.g., "1/2 this week")
+- **States**:
+  - Disabled state for weekly-limited options that are exhausted
+  - Highlight options compatible with current slot
+- **Actions**:
+  - "Quick add" button on each option
+  - Back button to return to template selection
+
+**Alternative: Quick Search View**
+- **Use Case**: "I want soup!" - search-first approach
+- **Layout**: Flat list of ALL options across all templates
+- **Search bar**: Search by option name
+- **Results show**:
+  - Option name
+  - Template name (e.g., "Tomato Soup" from "Soups")
+  - Compatible slots indicator
+  - Ability to select slot if not already chosen
 
 #### 3. **Meal Detail Editor**
 
@@ -273,27 +367,43 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 
 ### 3.2 User Flow Examples
 
-**Scenario 1: Planning Tomorrow's Breakfast**
+**Scenario 1: Planning Tomorrow's Breakfast (Slot-First Approach)**
 
 1. User opens app → sees today's view
 2. Clicks date picker → selects tomorrow
 3. Clicks empty "Breakfast" slot
-4. Modal opens with breakfast-appropriate templates
-5. Filters by "Office" location
-6. Selects "Oatmeal with Berries" card
-7. Adjusts portion to 1.2 servings
-8. Adds note: "Extra blueberries"
-9. Saves → card appears in breakfast slot
+4. Modal opens showing meal templates
+5. User browses and clicks "Breakfast Bowls" template
+6. Modal shows options: "Oatmeal with Berries", "Greek Yogurt Bowl", "Granola Bowl"
+7. User selects "Oatmeal with Berries" (shows Office location, compatible with Breakfast slot)
+8. Adjusts portion to 1.2 servings
+9. Adds note: "Extra blueberries"
+10. Saves → card appears in breakfast slot showing "Oatmeal with Berries" from "Breakfast Bowls"
 
-**Scenario 2: Logging Actual Meal**
+**Scenario 2: Finding a Meal (Meal-First Approach)**
+
+1. User thinks "I want soup today!"
+2. Opens app, clicks search icon
+3. Types "soup" in global search
+4. App shows all soup options:
+   - "Tomato Soup" from "Soups" template (Lunch/Dinner, Home)
+   - "Chicken Noodle" from "Soups" template (Lunch/Dinner, Home/Office)
+   - "Miso Soup" from "Japanese Meals" template (Lunch, Restaurant)
+5. Each result shows compatible slots: Lunch ✓, Dinner ✓, Breakfast ✗
+6. User selects "Tomato Soup"
+7. App asks "Which slot?" → user selects "Lunch"
+8. Meal is added to today's lunch slot
+
+**Scenario 3: Logging Actual Meal**
 
 1. User ate lunch, opens app
-2. Today's lunch slot shows planned "Chicken Salad"
+2. Today's lunch slot shows planned "Chicken Caesar Salad" (from "Salads" template)
 3. Clicks card → detail editor opens
 4. Marks "Completed" checkbox
 5. Adjusts location from "Office" to "Restaurant" (changed plans)
 6. Adds note: "Had extra avocado"
 7. Saves → card shows completed state (checkmark badge)
+8. Weekly limit counter updates: "Chicken Caesar: 1/2 this week"
 
 ### 3.3 Design System
 
@@ -366,14 +476,25 @@ CREATE INDEX idx_meal_templates_category ON meal_templates(category);
 
 **Backend Tasks:**
 
-- [ ] Implement database models (MealTemplate, MealEntry)
+- [ ] Implement database models (MealTemplate, MealOption, MealEntry)
+  - MealTemplate struct with tags
+  - MealOption struct with template_id and compatible_slots
+  - MealEntry struct with meal_option_id
+  - All enums (MealCategory, LocationType, SlotType)
 - [ ] Create repository layer for CRUD operations
+  - MealTemplateRepository (CRUD + get options by template)
+  - MealOptionRepository (CRUD + search + filter by compatibility)
+  - MealEntryRepository (CRUD + get by date/slot + weekly usage)
 - [ ] Implement Tauri commands for:
-  - Get all meal templates
-  - Create/Update/Delete meal templates
-  - Get meal entries by date range
-  - Create/Update/Delete meal entries
+  - Templates: Get all, Create, Update, Delete, Get with options
+  - Options: Get all, Get by template, Search, Create, Update, Delete
+  - Entries: Get by date range, Get by slot, Create, Update, Delete
+  - Search: Global search across all options
+  - Weekly limits: Check usage, Validate before creating entry
 - [ ] Add weekly limit validation logic
+  - Calculate usage from weekly_meal_usage view
+  - Validate against MealOption.weekly_limit
+  - Slot compatibility validation
 
 **Testing Tasks (Comprehensive Approach):**
 

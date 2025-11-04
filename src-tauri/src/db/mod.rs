@@ -89,9 +89,10 @@ mod tests {
 
         let table_names: Vec<String> = tables.into_iter().map(|(name,)| name).collect();
 
-        // Verify core tables exist
-        assert!(table_names.contains(&"meal_templates".to_string()));
-        assert!(table_names.contains(&"meal_entries".to_string()));
+        // Verify all three core tables exist (3-level hierarchy)
+        assert!(table_names.contains(&"meal_templates".to_string()), "meal_templates table not found");
+        assert!(table_names.contains(&"meal_options".to_string()), "meal_options table not found");
+        assert!(table_names.contains(&"meal_entries".to_string()), "meal_entries table not found");
     }
 
     #[tokio::test]
@@ -111,10 +112,11 @@ mod tests {
 
         let index_names: Vec<String> = indexes.into_iter().map(|(name,)| name).collect();
 
-        // Verify indexes exist
+        // Verify indexes exist for all three tables
         assert!(index_names.contains(&"idx_meal_entries_date".to_string()));
-        assert!(index_names.contains(&"idx_meal_entries_template".to_string()));
-        assert!(index_names.contains(&"idx_meal_templates_category".to_string()));
+        assert!(index_names.contains(&"idx_meal_entries_option".to_string()));
+        assert!(index_names.contains(&"idx_meal_options_template".to_string()));
+        assert!(index_names.contains(&"idx_meal_options_category".to_string()));
     }
 
     #[tokio::test]
