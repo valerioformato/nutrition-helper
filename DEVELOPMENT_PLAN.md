@@ -71,68 +71,96 @@ A Tauri-based desktop application for managing daily nutrition plans with meal t
 
 ## 2. Data Model
 
-### 2.1 Three-Level Hierarchy
+### 2.1 Four-Level Hierarchy
 
-The application uses a **three-level data model** to provide maximum flexibility:
+The application uses a **four-level data model** based on real-world nutrition planning:
 
-**Template → Option → Entry**
+**Slot → Template → Option → Entry**
 
 This allows users to:
-1. Organize meals into categories/groups (Templates)
-2. Define specific meal choices within those groups (Options)
-3. Log actual meals consumed or planned (Entries)
+
+1. Fill fixed meal slots throughout the day (Breakfast, Snacks, Lunch, Dinner)
+2. Choose from templates/cards compatible with each slot (Templates - the "Oppure" choices)
+3. Select specific ingredient variations within each template (Options)
+4. Log actual meals consumed or planned (Entries)
+
+**Real-world example:**
+- **Slot**: COLAZIONE (Breakfast)
+- **Template 1**: "Pane con marmellata e formaggio spalmabile" (Oppure)
+- **Template 2**: "Pane con affettato/formaggio/uovo" (Oppure)
+- **Template 3**: "Yogurt con cereali e frutta secca"
+  - **Option 3a**: philadelphia
+  - **Option 3b**: ricotta
+  - **Option 3c**: crema spalmabile 100% frutta secca
+- **Entry**: On 2024-11-04 at Breakfast, logged "ricotta" option
 
 ### 2.2 Core Entities
 
-#### MealTemplate (Level 1)
+#### SlotType (Level 1 - Implicit)
 
-Represents a category or group of related meals (the "card" in the UI).
+Fixed meal slots defined in application logic:
+
+```rust
+enum SlotType {
+    Breakfast,
+    MorningSnack,
+    Lunch,
+    AfternoonSnack,
+    Dinner,
+}
+```
+
+These are the 5 fixed time slots per day that structure meal planning.
+
+#### MealTemplate (Level 2)
+
+Represents a meal template/card that can fill a slot (separated by "Oppure" in nutrition plans).
 
 ```rust
 struct MealTemplate {
     id: i32,
-    name: String,                    // e.g., "Salads", "Soups", "Pasta Dishes"
+    name: String,                    // e.g., "Pane con marmellata e formaggio spalmabile"
     description: Option<String>,
-    tags: Vec<String>,               // e.g., ["vegetarian", "quick-prep"]
+    compatible_slots: Vec<SlotType>, // Which slots this template can fill
+    location_type: LocationType,     // Home, Office, Restaurant, Any
+    tags: Vec<String>,               // e.g., ["dolce", "veloce"]
     created_at: DateTime,
     updated_at: DateTime,
 }
 ```
 
-**Examples:**
-- "Breakfast Bowls"
-- "Lunch Salads"
-- "Dinner Proteins"
-- "Snacks"
+**Examples for COLAZIONE slot:**
 
-#### MealOption (Level 2)
+- "Pane con marmellata e formaggio spalmabile"
+- "Pane con affettato/formaggio/uovo"
+- "Yogurt con cereali e frutta secca"
 
-Represents an individual meal within a template.
+#### MealOption (Level 3)
+
+Represents specific ingredient choices within a template (the variations separated by "o", "e/o", "+").
 
 ```rust
 struct MealOption {
     id: i32,
     template_id: i32,                // Foreign key to MealTemplate
-    name: String,                    // e.g., "Chicken Caesar Salad"
+    name: String,                    // e.g., "philadelphia", "ricotta", "crema spalmabile"
     description: Option<String>,
-    category: MealCategory,          // Breakfast, Lunch, Dinner, Snack
-    location_type: LocationType,     // Home, Office, Restaurant, Any
     weekly_limit: Option<i32>,       // null = unlimited, 1 = once per week, etc.
     nutritional_notes: Option<String>,
-    compatible_slots: Vec<SlotType>, // Which meal slots can this option fill?
     created_at: DateTime,
     updated_at: DateTime,
 }
 ```
 
-**Examples within "Lunch Salads" template:**
-- "Chicken Caesar" (Office, Lunch only, 2x/week)
-- "Greek Salad" (Home, Lunch+Dinner, unlimited)
-- "Cobb Salad" (Restaurant, Lunch only, 1x/week)
+**Examples within "Pane con marmellata" template:**
 
-#### MealEntry (Level 3)
+- "philadelphia" (unlimited)
+- "ricotta" (2x/week)
+- "crema spalmabile 100% frutta secca" (1x/week)
 
-An actual meal that was consumed or planned (links an option to a date/slot).
+#### MealEntry (Level 4)
+
+An actual meal option logged/consumed (links an option to a date/slot).
 
 ```rust
 struct MealEntry {
@@ -180,6 +208,7 @@ enum SlotType {
 ### 2.3 Key Features of This Model
 
 **Flexibility:**
+
 - Templates group related meals logically
 - Options can specify which slots they're compatible with
 - Easy to add new options without restructuring
@@ -187,12 +216,14 @@ enum SlotType {
 **Use Cases Supported:**
 
 1. **Slot-First Planning** (traditional):
+
    - Click empty "Lunch" slot
    - Browse templates (categories)
    - Select specific option
    - Log the meal
 
 2. **Meal-First Search** (new):
+
    - Search "I want soup"
    - App shows all soup options across templates
    - App indicates which slots each option can fill
@@ -204,6 +235,7 @@ enum SlotType {
    - View enforces counts based on completed entries
 
 **Relationships:**
+
 ```
 Template (1) ──────> (many) Option (1) ──────> (many) Entry
    "Salads"              "Chicken Caesar"           "Nov 4, Lunch"
@@ -295,6 +327,7 @@ CREATE INDEX idx_meal_options_category ON meal_options(category);
 #### 2. **Meal Selection Modal (Two-Level Navigation)**
 
 **Step 1: Template Selection**
+
 - **Layout**: Grid of template cards
 - **Content**: Template names with preview of options count
 - **Filters**:
@@ -303,8 +336,9 @@ CREATE INDEX idx_meal_options_category ON meal_options(category);
 - **Search**: Search across template and option names
 
 **Step 2: Option Selection** (after clicking a template)
+
 - **Layout**: List or grid of meal options within selected template
-- **Content**: 
+- **Content**:
   - Option name, description
   - Location badge (home/office/restaurant)
   - Compatibility indicator (which slots this option can fill)
@@ -317,6 +351,7 @@ CREATE INDEX idx_meal_options_category ON meal_options(category);
   - Back button to return to template selection
 
 **Alternative: Quick Search View**
+
 - **Use Case**: "I want soup!" - search-first approach
 - **Layout**: Flat list of ALL options across all templates
 - **Search bar**: Search by option name

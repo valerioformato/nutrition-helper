@@ -1,7 +1,7 @@
 // Database module
 // Database connection and initialization
 
-use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
+use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::path::PathBuf;
 use tauri::Manager;
 
@@ -10,13 +10,12 @@ use tauri::Manager;
 pub async fn initialize_database(db_path: PathBuf) -> Result<SqlitePool, sqlx::Error> {
     // Ensure the parent directory exists
     if let Some(parent) = db_path.parent() {
-        std::fs::create_dir_all(parent)
-            .map_err(|e| sqlx::Error::Io(e))?;
+        std::fs::create_dir_all(parent).map_err(|e| sqlx::Error::Io(e))?;
     }
 
     // Create connection string
     let connection_string = format!("sqlite://{}?mode=rwc", db_path.display());
-    
+
     // Create connection pool
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
@@ -24,9 +23,7 @@ pub async fn initialize_database(db_path: PathBuf) -> Result<SqlitePool, sqlx::E
         .await?;
 
     // Run migrations
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await?;
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     Ok(pool)
 }
@@ -38,7 +35,7 @@ pub fn get_database_path(app_handle: &tauri::AppHandle) -> PathBuf {
         .path()
         .app_data_dir()
         .expect("Failed to get app data directory");
-    
+
     app_data_dir.join("nutrition_helper.db")
 }
 
@@ -90,9 +87,18 @@ mod tests {
         let table_names: Vec<String> = tables.into_iter().map(|(name,)| name).collect();
 
         // Verify all three core tables exist (3-level hierarchy)
-        assert!(table_names.contains(&"meal_templates".to_string()), "meal_templates table not found");
-        assert!(table_names.contains(&"meal_options".to_string()), "meal_options table not found");
-        assert!(table_names.contains(&"meal_entries".to_string()), "meal_entries table not found");
+        assert!(
+            table_names.contains(&"meal_templates".to_string()),
+            "meal_templates table not found"
+        );
+        assert!(
+            table_names.contains(&"meal_options".to_string()),
+            "meal_options table not found"
+        );
+        assert!(
+            table_names.contains(&"meal_entries".to_string()),
+            "meal_entries table not found"
+        );
     }
 
     #[tokio::test]
@@ -104,7 +110,7 @@ mod tests {
 
         // Query to check if indexes exist
         let indexes: Vec<(String,)> = sqlx::query_as(
-            "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%' ORDER BY name"
+            "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%' ORDER BY name",
         )
         .fetch_all(&pool)
         .await
@@ -112,11 +118,15 @@ mod tests {
 
         let index_names: Vec<String> = indexes.into_iter().map(|(name,)| name).collect();
 
-        // Verify indexes exist for all three tables
+        // Verify indexes exist (5 indexes total after schema update)
         assert!(index_names.contains(&"idx_meal_entries_date".to_string()));
         assert!(index_names.contains(&"idx_meal_entries_option".to_string()));
+        assert!(index_names.contains(&"idx_meal_entries_date_slot".to_string()));
         assert!(index_names.contains(&"idx_meal_options_template".to_string()));
-        assert!(index_names.contains(&"idx_meal_options_category".to_string()));
+        assert!(index_names.contains(&"idx_meal_templates_location".to_string()));
+        
+        // Should have exactly 5 indexes
+        assert_eq!(index_names.len(), 5, "Expected 5 indexes, found: {:?}", index_names);
     }
 
     #[tokio::test]
@@ -127,12 +137,11 @@ mod tests {
         let pool = initialize_database(db_path).await.unwrap();
 
         // Query to check if view exists
-        let views: Vec<(String,)> = sqlx::query_as(
-            "SELECT name FROM sqlite_master WHERE type='view' ORDER BY name"
-        )
-        .fetch_all(&pool)
-        .await
-        .unwrap();
+        let views: Vec<(String,)> =
+            sqlx::query_as("SELECT name FROM sqlite_master WHERE type='view' ORDER BY name")
+                .fetch_all(&pool)
+                .await
+                .unwrap();
 
         let view_names: Vec<String> = views.into_iter().map(|(name,)| name).collect();
 

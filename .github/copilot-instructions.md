@@ -17,13 +17,15 @@ This is a Tauri-based desktop application for managing daily nutrition plans wit
 ### Key Design Patterns
 
 1. **Repository Pattern**: Abstract database operations to support multiple DB backends
-2. **Card-Based UI**: Meal templates (categories) are visual cards that contain meal options
-3. **Three-Level Hierarchy**: Template → Option → Entry
-   - **Templates**: Meal categories/groups (e.g., "Salads", "Soups")
-   - **Options**: Individual meals within templates (e.g., "Chicken Caesar" within "Salads")
-   - **Entries**: Actual logged meals (snapshot of option at specific date/slot)
-4. **Slot-Based Planning**: 5 fixed meal slots per day (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner)
-5. **Dual Navigation**: Slot-first (plan by slot) and meal-first (search for specific meal)
+2. **Card-Based UI**: Meal templates are visual cards that fill meal slots
+3. **Four-Level Hierarchy**: Slot → Template → Option → Entry
+   - **Slots**: 5 fixed meal slots per day (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner)
+   - **Templates**: Meal cards that can fill slots (the "Oppure" choices in nutrition plans)
+   - **Options**: Ingredient/variation choices within templates (e.g., "philadelphia", "ricotta", "crema spalmabile")
+   - **Entries**: Actual logged meal options (snapshot of which option was chosen at specific date/slot)
+4. **Real-world example**: 
+   - Slot: COLAZIONE → Template: "Pane con marmellata" → Options: ["philadelphia", "ricotta", "crema spalmabile"] → Entry: logged "ricotta" on 2024-11-04
+5. **Dual Navigation**: Slot-first (plan by slot) and template-first (search for specific template)
 
 ### Important Rules
 

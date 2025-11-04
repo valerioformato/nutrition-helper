@@ -1,35 +1,41 @@
 -- Initial database schema for Nutrition Helper
--- Three-level hierarchy: Templates → Options → Entries
+-- Four-level hierarchy: Slot → Template → Option → Entry
 
--- Level 1: Meal Templates (the "cards" - meal categories/groups)
--- Example: "Salads", "Soups", "Pasta Dishes"
+-- Level 1: Meal Slots (fixed 5 slots per day)
+-- These are implicitly defined in the application logic:
+-- 'breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner'
+
+-- Level 2: Meal Templates (the "cards" that fill slots, separated by "Oppure")
+-- Example: "Pane con marmellata e formaggio spalmabile"
+-- Each template can be compatible with one or more meal slots
 CREATE TABLE IF NOT EXISTS meal_templates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
+    compatible_slots TEXT NOT NULL, -- JSON array of SlotType values
+    location_type TEXT NOT NULL CHECK(location_type IN ('home', 'office', 'restaurant', 'any')),
     tags TEXT, -- JSON array stored as text
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Level 2: Meal Options (individual meals within a template)
--- Example: "Chicken Caesar Salad" within "Salads" template
+-- Level 3: Meal Options (ingredient/variation choices within a template)
+-- Example: "philadelphia", "ricotta", "crema spalmabile 100% frutta secca"
+-- These are the specific choices separated by "o", "e/o", "+", etc. within each template
 CREATE TABLE IF NOT EXISTS meal_options (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     template_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
-    category TEXT NOT NULL CHECK(category IN ('breakfast', 'lunch', 'dinner', 'snack')),
-    location_type TEXT NOT NULL CHECK(location_type IN ('home', 'office', 'restaurant', 'any')),
     weekly_limit INTEGER CHECK(weekly_limit IS NULL OR weekly_limit > 0),
     nutritional_notes TEXT,
-    compatible_slots TEXT NOT NULL, -- JSON array of SlotType values
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (template_id) REFERENCES meal_templates(id) ON DELETE CASCADE
 );
 
--- Level 3: Meal Entries (actual meals consumed/planned)
+-- Level 4: Meal Entries (actual meal options logged/consumed)
+-- This is when the user logs which specific option they chose on a given date/slot
 CREATE TABLE IF NOT EXISTS meal_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     meal_option_id INTEGER NOT NULL,
@@ -50,8 +56,7 @@ CREATE INDEX IF NOT EXISTS idx_meal_entries_date ON meal_entries(date);
 CREATE INDEX IF NOT EXISTS idx_meal_entries_option ON meal_entries(meal_option_id);
 CREATE INDEX IF NOT EXISTS idx_meal_entries_date_slot ON meal_entries(date, slot_type);
 CREATE INDEX IF NOT EXISTS idx_meal_options_template ON meal_options(template_id);
-CREATE INDEX IF NOT EXISTS idx_meal_options_category ON meal_options(category);
-CREATE INDEX IF NOT EXISTS idx_meal_options_location ON meal_options(location_type);
+CREATE INDEX IF NOT EXISTS idx_meal_templates_location ON meal_templates(location_type);
 
 -- View for tracking weekly meal usage (for enforcing limits)
 CREATE VIEW IF NOT EXISTS weekly_meal_usage AS
