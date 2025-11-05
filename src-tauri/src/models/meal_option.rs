@@ -37,7 +37,7 @@ pub struct UpdateMealOption {
 pub struct MealOptionWithTags {
     #[serde(flatten)]
     pub option: MealOption,
-    pub tags: Vec<i64>,  // Tag IDs associated with this option
+    pub tags: Vec<i64>, // Tag IDs associated with this option
 }
 
 impl CreateMealOption {
@@ -99,7 +99,7 @@ mod tests {
 
         let json = serde_json::to_string(&option).unwrap();
         let deserialized: CreateMealOption = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.name, option.name);
         assert_eq!(deserialized.template_id, 5);
     }
@@ -118,12 +118,12 @@ mod tests {
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             },
-            tags: vec![10, 11, 12],  // Tag IDs: pasta, pasta_integrale, high_fiber
+            tags: vec![10, 11, 12], // Tag IDs: pasta, pasta_integrale, high_fiber
         };
 
         let json = serde_json::to_string(&option_with_tags).unwrap();
         let deserialized: MealOptionWithTags = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.option.name, "pasta_integrale");
         assert_eq!(deserialized.tags.len(), 3);
         assert!(deserialized.tags.contains(&10));

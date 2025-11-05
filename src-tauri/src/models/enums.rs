@@ -134,11 +134,8 @@ mod tests {
     fn test_slot_type_db_conversion() {
         assert_eq!(SlotType::Breakfast.to_db_string(), "breakfast");
         assert_eq!(SlotType::MorningSnack.to_db_string(), "morning_snack");
-        
-        assert_eq!(
-            SlotType::from_db_string("lunch").unwrap(),
-            SlotType::Lunch
-        );
+
+        assert_eq!(SlotType::from_db_string("lunch").unwrap(), SlotType::Lunch);
         assert!(SlotType::from_db_string("invalid").is_err());
     }
 

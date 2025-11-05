@@ -13,9 +13,9 @@ pub struct MealEntry {
     pub date: NaiveDate,
     pub slot_type: SlotType,
     pub location: LocationType,
-    pub servings: f64,           // Default 1.0, nutrition plan uses strict serving sizes
+    pub servings: f64, // Default 1.0, nutrition plan uses strict serving sizes
     pub notes: Option<String>,
-    pub completed: bool,         // FALSE = planned, TRUE = consumed
+    pub completed: bool, // FALSE = planned, TRUE = consumed
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -27,7 +27,7 @@ pub struct CreateMealEntry {
     pub date: NaiveDate,
     pub slot_type: SlotType,
     pub location: LocationType,
-    pub servings: Option<f64>,   // Defaults to 1.0 if not provided
+    pub servings: Option<f64>, // Defaults to 1.0 if not provided
     pub notes: Option<String>,
     pub completed: Option<bool>, // Defaults to false (planned)
 }
@@ -85,7 +85,7 @@ impl UpdateMealEntry {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct WeeklyUsage {
     pub meal_option_id: i64,
-    pub week: String,           // Format: "YYYY-WW" (ISO week)
+    pub week: String, // Format: "YYYY-WW" (ISO week)
     pub usage_count: i64,
 }
 
@@ -191,7 +191,7 @@ mod tests {
 
         let json = serde_json::to_string(&entry).unwrap();
         let deserialized: CreateMealEntry = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.meal_option_id, 5);
         assert_eq!(deserialized.servings, Some(1.2));
         assert_eq!(deserialized.completed, Some(true));
@@ -207,7 +207,7 @@ mod tests {
 
         let json = serde_json::to_string(&usage).unwrap();
         assert!(json.contains("2024-45"));
-        
+
         let deserialized: WeeklyUsage = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized.usage_count, 2);
     }

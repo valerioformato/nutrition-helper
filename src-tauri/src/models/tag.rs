@@ -8,10 +8,10 @@ use super::TagCategory;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromRow)]
 pub struct Tag {
     pub id: i64,
-    pub name: String,                    // Internal key: "pasta", "ricotta"
-    pub display_name: String,            // User-facing: "Pasta", "Ricotta"
+    pub name: String,         // Internal key: "pasta", "ricotta"
+    pub display_name: String, // User-facing: "Pasta", "Ricotta"
     pub category: TagCategory,
-    pub weekly_suggestion: Option<i32>,  // Soft limit (e.g., 3 for "max 3x/week")
+    pub weekly_suggestion: Option<i32>, // Soft limit (e.g., 3 for "max 3x/week")
     pub parent_tag_id: Option<i64>,     // For hierarchies: pasta_integrale -> pasta
     pub created_at: DateTime<Utc>,
 }
@@ -47,7 +47,11 @@ impl CreateTag {
         }
 
         // Name should be lowercase with underscores (internal identifier)
-        if !self.name.chars().all(|c| c.is_ascii_lowercase() || c == '_') {
+        if !self
+            .name
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c == '_')
+        {
             return Err("Tag name must be lowercase with underscores only".to_string());
         }
 
@@ -119,7 +123,7 @@ mod tests {
 
         let json = serde_json::to_string(&tag).unwrap();
         let deserialized: CreateTag = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.name, tag.name);
         assert_eq!(deserialized.weekly_suggestion, tag.weekly_suggestion);
     }

@@ -12,8 +12,8 @@ pub struct MealTemplate {
     pub id: i64,
     pub name: String,
     pub description: Option<String>,
-    pub compatible_slots: Vec<SlotType>,  // Which slots can this template fill
-    pub location_type: LocationType,       // Where this meal can be prepared
+    pub compatible_slots: Vec<SlotType>, // Which slots can this template fill
+    pub location_type: LocationType,     // Where this meal can be prepared
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -24,8 +24,8 @@ pub struct MealTemplateRow {
     pub id: i64,
     pub name: String,
     pub description: Option<String>,
-    pub compatible_slots: String,  // JSON string from DB
-    pub location_type: String,     // TEXT from DB
+    pub compatible_slots: String, // JSON string from DB
+    pub location_type: String,    // TEXT from DB
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -36,7 +36,7 @@ impl TryFrom<MealTemplateRow> for MealTemplate {
     fn try_from(row: MealTemplateRow) -> Result<Self, Self::Error> {
         let compatible_slots = MealTemplate::parse_compatible_slots(&row.compatible_slots)
             .map_err(|e| format!("Failed to parse compatible_slots: {}", e))?;
-        
+
         let location_type = LocationType::from_db_string(&row.location_type)?;
 
         Ok(MealTemplate {
@@ -64,7 +64,7 @@ pub struct CreateMealTemplate {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateMealTemplate {
     pub name: Option<String>,
-    pub description: Option<Option<String>>,  // None = no change, Some(None) = clear
+    pub description: Option<Option<String>>, // None = no change, Some(None) = clear
     pub compatible_slots: Option<Vec<SlotType>>,
     pub location_type: Option<LocationType>,
 }
@@ -154,7 +154,7 @@ mod tests {
 
         let json = serde_json::to_string(&template).unwrap();
         let deserialized: CreateMealTemplate = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.name, template.name);
         assert_eq!(deserialized.compatible_slots.len(), 2);
     }
@@ -163,7 +163,7 @@ mod tests {
     fn test_compatible_slots_json_conversion() {
         let slots = vec![SlotType::Breakfast, SlotType::Lunch];
         let json_str = MealTemplate::serialize_compatible_slots(&slots);
-        
+
         assert!(json_str.contains("breakfast"));
         assert!(json_str.contains("lunch"));
 

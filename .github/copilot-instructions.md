@@ -11,6 +11,7 @@
 - Next: Build core data layer (models, repositories, Tauri commands)
 
 **Recent Changes:**
+
 - Commit 2486bce (2024-11-04): Schema refinements (servings field, planning/logging clarification)
 - Commit 18fb35a (2024-11-04): Tags system with hierarchies
 - Commit db5e4c8: 4-level hierarchy correction
