@@ -1,5 +1,8 @@
 # Nutrition Helper
 
+[![CI](https://github.com/valerioformato/nutrition-helper/actions/workflows/ci.yml/badge.svg)](https://github.com/valerioformato/nutrition-helper/actions/workflows/ci.yml)
+[![Code Coverage](https://github.com/valerioformato/nutrition-helper/actions/workflows/coverage.yml/badge.svg)](https://github.com/valerioformato/nutrition-helper/actions/workflows/coverage.yml)
+
 A desktop application for managing daily nutrition plans with meal tracking, built with Tauri, React, and TypeScript.
 
 ## 📋 Overview
@@ -27,10 +30,11 @@ Nutrition Helper allows you to:
 
 ## 🚀 Current Status
 
-**Phase 0**: Project Setup & Scaffolding (95% Complete) 🔧
+**Phase 1**: Core Data Layer ✅ Complete | **Phase 2**: Tauri Commands 🔧 In Progress
 
 ### Completed
 
+#### Phase 0: Project Setup & Scaffolding ✅
 - [x] Architecture planning
 - [x] Technology stack decisions
 - [x] Development plan documentation
@@ -44,12 +48,31 @@ Nutrition Helper allows you to:
 - [x] App icons generated for all platforms
 - [x] Linux graphics workaround documented
 - [x] Git repository initialized with commits
+- [x] Database schema creation (5 tables, 9 indexes, 2 views)
+- [x] Database migrations with version control
+- [x] Testing infrastructure setup
+
+#### Phase 1: Core Data Layer ✅
+- [x] **All 5 data models** (Tag, Template, Option, Entry, Enums)
+- [x] **Model validation and serialization** (20 unit tests)
+- [x] **TagRepository** (9 methods, 8 tests) - Hierarchical tags with weekly suggestions
+- [x] **MealTemplateRepository** (9 methods, 8 tests) - Templates with slot compatibility
+- [x] **MealOptionRepository** (14 methods, 10 tests) - Options with tag management
+- [x] **MealEntryRepository** (16 methods, 12 tests) - Meal logging with date queries
+- [x] **Database integration** (5 integration tests) - Schema, indexes, views
+- [x] **63 total tests passing** (100% success rate)
+- [x] **Repository pattern** fully established
+- [x] **Weekly usage views** for tracking meal frequency
+- [x] **ISO week calculations** (Monday-based)
+- [x] **CI/CD pipeline** with GitHub Actions
 
 ### In Progress
 
-- [ ] Database schema creation (SQL migrations)
-- [ ] Database connection test
-- [ ] Testing infrastructure setup
+#### Phase 2: Tauri Commands Layer 🔧
+- [ ] Create IPC command handlers for all repositories
+- [ ] Set up app state management (SqlitePool)
+- [ ] Error serialization for frontend communication
+- [ ] Business logic services (weekly limits, slot validation)
 
 ## 🛠️ Setup Instructions
 
