@@ -35,6 +35,7 @@ Nutrition Helper allows you to:
 ### Completed
 
 #### Phase 0: Project Setup & Scaffolding ✅
+
 - [x] Architecture planning
 - [x] Technology stack decisions
 - [x] Development plan documentation
@@ -53,6 +54,7 @@ Nutrition Helper allows you to:
 - [x] Testing infrastructure setup
 
 #### Phase 1: Core Data Layer ✅
+
 - [x] **All 5 data models** (Tag, Template, Option, Entry, Enums)
 - [x] **Model validation and serialization** (20 unit tests)
 - [x] **TagRepository** (9 methods, 8 tests) - Hierarchical tags with weekly suggestions
@@ -69,6 +71,7 @@ Nutrition Helper allows you to:
 ### In Progress
 
 #### Phase 2: Tauri Commands Layer 🔧
+
 - [ ] Create IPC command handlers for all repositories
 - [ ] Set up app state management (SqlitePool)
 - [ ] Error serialization for frontend communication

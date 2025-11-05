@@ -9,12 +9,14 @@ This project uses GitHub Actions for continuous integration and continuous deplo
 ### 1. CI Workflow (`.github/workflows/ci.yml`)
 
 **Triggers:**
+
 - Push to `main` or `develop` branches
 - Pull requests to `main` or `develop` branches
 
 **Jobs:**
 
 #### `test-rust`
+
 Tests the Rust backend across multiple operating systems.
 
 - **Matrix Strategy:** Runs on Ubuntu, Windows, and macOS
@@ -28,6 +30,7 @@ Tests the Rust backend across multiple operating systems.
   7. Build the project with `cargo build`
 
 #### `test-frontend`
+
 Tests the frontend TypeScript code.
 
 - **Platform:** Ubuntu only (for speed)
@@ -39,6 +42,7 @@ Tests the frontend TypeScript code.
   5. Run linting with `npm run lint` (non-blocking)
 
 #### `build-tauri`
+
 Full integration test - builds complete Tauri application.
 
 - **Platform:** Ubuntu only
@@ -53,6 +57,7 @@ Full integration test - builds complete Tauri application.
 ### 2. Coverage Workflow (`.github/workflows/coverage.yml`)
 
 **Triggers:**
+
 - Push to `main` branch
 - Pull requests to `main` branch
 
@@ -66,6 +71,7 @@ Full integration test - builds complete Tauri application.
   4. Check coverage threshold (fails if < 85%)
 
 **Coverage Targets:**
+
 - Backend: 85% minimum (enforced)
 - Frontend: 70% target (Phase 7)
 
