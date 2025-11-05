@@ -58,5 +58,9 @@
     }
   },
   // Recommended extensions
-  "extensions.ignoreRecommendations": false
+  "extensions.ignoreRecommendations": false,
+  "chat.tools.terminal.autoApprove": {
+    "cargo test": true
+  },
+
 }
