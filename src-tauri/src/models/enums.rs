@@ -26,7 +26,7 @@ impl SlotType {
     }
 
     /// Convert to database string representation
-    pub fn to_db_string(&self) -> &'static str {
+    pub fn to_db_string(self) -> &'static str {
         match self {
             SlotType::Breakfast => "breakfast",
             SlotType::MorningSnack => "morning_snack",
@@ -61,7 +61,7 @@ pub enum LocationType {
 }
 
 impl LocationType {
-    pub fn to_db_string(&self) -> &'static str {
+    pub fn to_db_string(self) -> &'static str {
         match self {
             LocationType::Home => "home",
             LocationType::Office => "office",
@@ -98,7 +98,7 @@ pub enum TagCategory {
 }
 
 impl TagCategory {
-    pub fn to_db_string(&self) -> &'static str {
+    pub fn to_db_string(self) -> &'static str {
         match self {
             TagCategory::Ingredient => "ingredient",
             TagCategory::Dietary => "dietary",

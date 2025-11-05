@@ -12,11 +12,11 @@ impl MealEntryRepository {
     fn row_to_entry(row: &sqlx::sqlite::SqliteRow) -> Result<MealEntry> {
         let slot_type_str: String = row.try_get("slot_type")?;
         let slot_type =
-            SlotType::from_db_string(&slot_type_str).map_err(|e| sqlx::Error::Protocol(e))?;
+            SlotType::from_db_string(&slot_type_str).map_err(sqlx::Error::Protocol)?;
 
         let location_str: String = row.try_get("location")?;
         let location =
-            LocationType::from_db_string(&location_str).map_err(|e| sqlx::Error::Protocol(e))?;
+            LocationType::from_db_string(&location_str).map_err(sqlx::Error::Protocol)?;
 
         Ok(MealEntry {
             id: row.try_get("id")?,
@@ -35,7 +35,7 @@ impl MealEntryRepository {
     /// Create a new meal entry
     pub async fn create(pool: &SqlitePool, entry: CreateMealEntry) -> Result<MealEntry> {
         // Validate using the model's validation method
-        entry.validate().map_err(|e| sqlx::Error::Protocol(e))?;
+        entry.validate().map_err(sqlx::Error::Protocol)?;
 
         // Check that meal_option_id exists
         let option_exists: bool =
@@ -243,7 +243,7 @@ impl MealEntryRepository {
     /// Update a meal entry
     pub async fn update(pool: &SqlitePool, id: i64, update: UpdateMealEntry) -> Result<MealEntry> {
         // Validate using the model's validation method
-        update.validate().map_err(|e| sqlx::Error::Protocol(e))?;
+        update.validate().map_err(sqlx::Error::Protocol)?;
 
         // Check that entry exists
         if Self::get_by_id(pool, id).await?.is_none() {
@@ -329,7 +329,7 @@ mod tests {
     async fn setup_test_db() -> (SqlitePool, TempDir) {
         let temp_dir = TempDir::new().unwrap();
         let db_path = temp_dir.path().join("test.db");
-        let pool = db::initialize_database(PathBuf::from(db_path))
+        let pool = db::initialize_database(db_path)
             .await
             .unwrap();
         (pool, temp_dir)
@@ -379,7 +379,7 @@ mod tests {
         assert_eq!(created.date, NaiveDate::from_ymd_opt(2024, 11, 5).unwrap());
         assert_eq!(created.slot_type, SlotType::Breakfast);
         assert_eq!(created.servings, 1.5);
-        assert_eq!(created.completed, true);
+        assert!(created.completed);
     }
 
     #[tokio::test]
@@ -400,7 +400,7 @@ mod tests {
         let created = MealEntryRepository::create(&pool, entry).await.unwrap();
 
         assert_eq!(created.servings, 1.0);
-        assert_eq!(created.completed, false);
+        assert!(!created.completed);
     }
 
     #[tokio::test]
@@ -617,7 +617,7 @@ mod tests {
         assert_eq!(updated.location, LocationType::Office);
         assert_eq!(updated.servings, 1.5);
         assert_eq!(updated.notes, Some("Original notes".to_string()));
-        assert_eq!(updated.completed, true);
+        assert!(updated.completed);
 
         // Clear notes
         let update = UpdateMealEntry {

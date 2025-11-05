@@ -10,7 +10,7 @@ use tauri::Manager;
 pub async fn initialize_database(db_path: PathBuf) -> Result<SqlitePool, sqlx::Error> {
     // Ensure the parent directory exists
     if let Some(parent) = db_path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| sqlx::Error::Io(e))?;
+        std::fs::create_dir_all(parent).map_err(sqlx::Error::Io)?;
     }
 
     // Create connection string

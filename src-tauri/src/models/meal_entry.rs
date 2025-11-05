@@ -154,7 +154,7 @@ mod tests {
         };
 
         assert_eq!(entry.servings_or_default(), 1.0);
-        assert_eq!(entry.completed_or_default(), false);
+        assert!(!entry.completed_or_default());
     }
 
     #[test]

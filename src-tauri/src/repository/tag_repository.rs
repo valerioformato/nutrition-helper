@@ -28,7 +28,7 @@ impl TagRepository {
 
     /// Create a new tag
     pub async fn create(pool: &SqlitePool, tag: CreateTag) -> Result<Tag> {
-        tag.validate().map_err(|e| sqlx::Error::Protocol(e))?;
+        tag.validate().map_err(sqlx::Error::Protocol)?;
 
         let category_str = tag.category.to_db_string();
 
@@ -100,7 +100,7 @@ impl TagRepository {
         .fetch_all(pool)
         .await?;
 
-        rows.iter().map(|r| Self::row_to_tag(r)).collect()
+        rows.iter().map(Self::row_to_tag).collect()
     }
 
     /// Get all tags by category
@@ -119,7 +119,7 @@ impl TagRepository {
         .fetch_all(pool)
         .await?;
 
-        rows.iter().map(|r| Self::row_to_tag(r)).collect()
+        rows.iter().map(Self::row_to_tag).collect()
     }
 
     /// Get child tags of a parent tag
@@ -136,7 +136,7 @@ impl TagRepository {
         .fetch_all(pool)
         .await?;
 
-        rows.iter().map(|r| Self::row_to_tag(r)).collect()
+        rows.iter().map(Self::row_to_tag).collect()
     }
 
     /// Update a tag

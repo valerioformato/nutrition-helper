@@ -17,13 +17,12 @@ impl MealTemplateRepository {
         })?;
 
         let compatible_slots_json: String = row.try_get("compatible_slots")?;
-        let compatible_slots = MealTemplate::parse_compatible_slots(&compatible_slots_json)
-            .map_err(|e| {
-                sqlx::Error::Decode(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    e.to_string(),
-                )))
-            })?;
+        let compatible_slots = MealTemplate::parse_compatible_slots(&compatible_slots_json).map_err(|e| {
+            sqlx::Error::Decode(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                e.to_string(),
+            )))
+        })?;
 
         Ok(MealTemplate {
             id: row.try_get("id")?,
@@ -38,7 +37,7 @@ impl MealTemplateRepository {
 
     /// Create a new meal template
     pub async fn create(pool: &SqlitePool, template: CreateMealTemplate) -> Result<MealTemplate> {
-        template.validate().map_err(|e| sqlx::Error::Protocol(e))?;
+        template.validate().map_err(sqlx::Error::Protocol)?;
 
         let location_str = template.location_type.to_db_string();
         let compatible_slots_json =
@@ -92,7 +91,7 @@ impl MealTemplateRepository {
         .fetch_all(pool)
         .await?;
 
-        rows.iter().map(|r| Self::row_to_template(r)).collect()
+        rows.iter().map(Self::row_to_template).collect()
     }
 
     /// Get templates by location type
@@ -114,7 +113,7 @@ impl MealTemplateRepository {
         .fetch_all(pool)
         .await?;
 
-        rows.iter().map(|r| Self::row_to_template(r)).collect()
+        rows.iter().map(Self::row_to_template).collect()
     }
 
     /// Get templates compatible with a specific slot
@@ -145,7 +144,7 @@ impl MealTemplateRepository {
         .fetch_all(pool)
         .await?;
 
-        rows.iter().map(|r| Self::row_to_template(r)).collect()
+        rows.iter().map(Self::row_to_template).collect()
     }
 
     /// Update a template

@@ -30,7 +30,7 @@ impl MealOptionRepository {
     /// Create a new meal option
     pub async fn create(pool: &SqlitePool, option: CreateMealOption) -> Result<MealOption> {
         // Validate using the model's validation method
-        option.validate().map_err(|e| sqlx::Error::Protocol(e))?;
+        option.validate().map_err(sqlx::Error::Protocol)?;
 
         // Check that template_id exists
         let template_exists: bool =
@@ -353,7 +353,7 @@ mod tests {
     async fn setup_test_db() -> (SqlitePool, TempDir) {
         let temp_dir = TempDir::new().unwrap();
         let db_path = temp_dir.path().join("test.db");
-        let pool = db::initialize_database(PathBuf::from(db_path))
+        let pool = db::initialize_database(db_path)
             .await
             .unwrap();
         (pool, temp_dir)
