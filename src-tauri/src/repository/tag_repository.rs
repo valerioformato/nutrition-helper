@@ -1,5 +1,4 @@
 use crate::models::{CreateTag, Tag, TagCategory, UpdateTag};
-use chrono::{DateTime, Utc};
 use sqlx::{Result, Row, SqlitePool};
 
 pub struct TagRepository;
@@ -195,13 +194,23 @@ impl TagRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db;
-    use tempfile::tempdir;
+    use sqlx::sqlite::SqlitePoolOptions;
 
     async fn setup_test_db() -> SqlitePool {
-        let dir = tempdir().unwrap();
-        let db_path = dir.path().join("test.db");
-        db::initialize_database(db_path).await.unwrap()
+        // Use in-memory database for tests
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect(":memory:")
+            .await
+            .expect("Failed to create in-memory database");
+
+        // Run migrations
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .expect("Failed to run migrations");
+
+        pool
     }
 
     #[tokio::test]

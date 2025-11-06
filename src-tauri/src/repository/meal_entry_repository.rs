@@ -11,8 +11,7 @@ impl MealEntryRepository {
     /// Helper to convert a database row to MealEntry
     fn row_to_entry(row: &sqlx::sqlite::SqliteRow) -> Result<MealEntry> {
         let slot_type_str: String = row.try_get("slot_type")?;
-        let slot_type =
-            SlotType::from_db_string(&slot_type_str).map_err(sqlx::Error::Protocol)?;
+        let slot_type = SlotType::from_db_string(&slot_type_str).map_err(sqlx::Error::Protocol)?;
 
         let location_str: String = row.try_get("location")?;
         let location =
@@ -320,8 +319,8 @@ impl MealEntryRepository {
 mod tests {
     use super::*;
     use crate::db;
-    use crate::models::{CreateMealOption, CreateMealTemplate, CreateTag, TagCategory};
-    use crate::repository::{MealOptionRepository, MealTemplateRepository, TagRepository};
+    use crate::models::{CreateMealOption, CreateMealTemplate};
+    use crate::repository::{MealOptionRepository, MealTemplateRepository};
     use chrono::NaiveDate;
     use std::path::PathBuf;
     use tempfile::TempDir;
@@ -329,9 +328,7 @@ mod tests {
     async fn setup_test_db() -> (SqlitePool, TempDir) {
         let temp_dir = TempDir::new().unwrap();
         let db_path = temp_dir.path().join("test.db");
-        let pool = db::initialize_database(db_path)
-            .await
-            .unwrap();
+        let pool = db::initialize_database(db_path).await.unwrap();
         (pool, temp_dir)
     }
 

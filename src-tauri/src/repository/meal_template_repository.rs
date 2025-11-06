@@ -1,6 +1,4 @@
-use crate::models::{
-    CreateMealTemplate, LocationType, MealTemplate, MealTemplateRow, SlotType, UpdateMealTemplate,
-};
+use crate::models::{CreateMealTemplate, LocationType, MealTemplate, SlotType, UpdateMealTemplate};
 use sqlx::{Result, Row, SqlitePool};
 
 pub struct MealTemplateRepository;
@@ -17,12 +15,13 @@ impl MealTemplateRepository {
         })?;
 
         let compatible_slots_json: String = row.try_get("compatible_slots")?;
-        let compatible_slots = MealTemplate::parse_compatible_slots(&compatible_slots_json).map_err(|e| {
-            sqlx::Error::Decode(Box::new(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                e.to_string(),
-            )))
-        })?;
+        let compatible_slots = MealTemplate::parse_compatible_slots(&compatible_slots_json)
+            .map_err(|e| {
+                sqlx::Error::Decode(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    e.to_string(),
+                )))
+            })?;
 
         Ok(MealTemplate {
             id: row.try_get("id")?,
@@ -203,13 +202,23 @@ impl MealTemplateRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db;
-    use tempfile::tempdir;
+    use sqlx::sqlite::SqlitePoolOptions;
 
     async fn setup_test_db() -> SqlitePool {
-        let dir = tempdir().unwrap();
-        let db_path = dir.path().join("test.db");
-        db::initialize_database(db_path).await.unwrap()
+        // Use in-memory database for tests
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect(":memory:")
+            .await
+            .expect("Failed to create in-memory database");
+
+        // Run migrations
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .expect("Failed to run migrations");
+
+        pool
     }
 
     #[tokio::test]

@@ -2,6 +2,9 @@
 // Rust structs representing database entities
 
 // Re-export all model types
+// Note: These will be used in Phase 2 (Tauri commands)
+#![allow(dead_code)]
+
 mod enums;
 mod meal_entry;
 mod meal_option;

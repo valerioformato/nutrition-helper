@@ -1,6 +1,4 @@
-use crate::models::{
-    CreateMealOption, MealOption, MealOptionWithTags, Tag, TagCategory, UpdateMealOption,
-};
+use crate::models::{CreateMealOption, MealOption, MealOptionWithTags, UpdateMealOption};
 use sqlx::{Result, Row, SqlitePool};
 
 pub struct MealOptionRepository;
@@ -353,9 +351,7 @@ mod tests {
     async fn setup_test_db() -> (SqlitePool, TempDir) {
         let temp_dir = TempDir::new().unwrap();
         let db_path = temp_dir.path().join("test.db");
-        let pool = db::initialize_database(db_path)
-            .await
-            .unwrap();
+        let pool = db::initialize_database(db_path).await.unwrap();
         (pool, temp_dir)
     }
 
