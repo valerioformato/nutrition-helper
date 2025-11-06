@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { SlotType } from "../lib/types";
+import { MealSlot } from "../components/meals/MealSlot";
 
 /**
  * DailyView - Main view for displaying daily meal slots
@@ -132,19 +133,16 @@ export function DailyView() {
         {/* Meal Slots Timeline */}
         <div className="space-y-4">
           {slots.map((slot) => (
-            <div
+            <MealSlot
               key={slot}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {getSlotDisplayName(slot)}
-              </h3>
-              {/* Placeholder for MealSlot component */}
-              <div className="text-gray-500 italic">No meal added yet</div>
-              <button className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-                Add Meal
-              </button>
-            </div>
+              slotType={slot}
+              slotName={getSlotDisplayName(slot)}
+              isEmpty={true}
+              onAddMeal={() => {
+                console.log(`Add meal to ${getSlotDisplayName(slot)}`);
+                // TODO: Open meal selection modal (Task 6)
+              }}
+            />
           ))}
         </div>
       </div>
