@@ -100,6 +100,7 @@ pub fn run() {
             commands::create_entry,
             commands::update_entry,
             commands::delete_entry,
+            commands::validate_entry,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

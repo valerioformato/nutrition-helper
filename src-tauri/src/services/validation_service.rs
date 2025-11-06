@@ -4,13 +4,15 @@
 use crate::models::{MealTemplate, SlotType};
 use crate::repository::{MealEntryRepository, MealOptionRepository, TagRepository};
 use chrono::{Datelike, IsoWeek, NaiveDate};
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
 /// Result type for validation operations
 pub type ValidationResult<T> = Result<T, ValidationError>;
 
 /// Validation errors with detailed messages
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum ValidationError {
     /// Weekly limit would be exceeded
     WeeklyLimitExceeded {
@@ -67,13 +69,13 @@ impl std::fmt::Display for ValidationError {
 }
 
 /// Validation warnings (non-blocking)
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ValidationWarning {
     pub message: String,
     pub warning_type: WarningType,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum WarningType {
     TagSuggestion,
     HighFrequency,

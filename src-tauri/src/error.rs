@@ -20,6 +20,9 @@ pub enum ApiError {
     /// Validation error (400)
     ValidationError(String),
 
+    /// Business logic validation failed (from ValidationService)
+    BusinessValidationError(crate::services::ValidationError),
+
     /// Duplicate resource (409)
     Conflict(String),
 
@@ -36,6 +39,9 @@ impl std::fmt::Display for ApiError {
             ApiError::DatabaseError(msg) => write!(f, "Database error: {}", msg),
             ApiError::NotFound(msg) => write!(f, "Not found: {}", msg),
             ApiError::ValidationError(msg) => write!(f, "Validation error: {}", msg),
+            ApiError::BusinessValidationError(err) => {
+                write!(f, "Business validation error: {}", err)
+            }
             ApiError::Conflict(msg) => write!(f, "Conflict: {}", msg),
             ApiError::ForeignKeyViolation(msg) => write!(f, "Foreign key violation: {}", msg),
             ApiError::InternalError(msg) => write!(f, "Internal error: {}", msg),
@@ -90,6 +96,13 @@ impl From<sqlx::Error> for ApiError {
             }
             _ => ApiError::DatabaseError(err.to_string()),
         }
+    }
+}
+
+/// Convert ValidationError to ApiError
+impl From<crate::services::ValidationError> for ApiError {
+    fn from(err: crate::services::ValidationError) -> Self {
+        ApiError::BusinessValidationError(err)
     }
 }
 

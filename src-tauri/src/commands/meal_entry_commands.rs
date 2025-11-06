@@ -6,6 +6,7 @@ use crate::models::{
     CreateMealEntry, MealEntry, SlotType, UpdateMealEntry, WeeklyTagUsage, WeeklyUsage,
 };
 use crate::repository::MealEntryRepository;
+use crate::services::{ValidationService, ValidationWarning};
 use chrono::NaiveDate;
 use sqlx::SqlitePool;
 use tauri::State;
@@ -114,14 +115,28 @@ pub async fn get_weekly_tag_usage(
 }
 
 /// Create a new meal entry
+/// This command validates the entry before creation:
+/// - Checks slot compatibility with the meal template
+/// - Enforces weekly limits (hard constraint)
+/// - Returns warnings for tag suggestions (soft constraint)
 #[tauri::command]
 pub async fn create_entry(
     entry: CreateMealEntry,
     pool: State<'_, SqlitePool>,
-) -> ApiResult<MealEntry> {
-    MealEntryRepository::create(pool.inner(), entry)
-        .await
-        .map_err(Into::into)
+) -> ApiResult<(MealEntry, Vec<ValidationWarning>)> {
+    // Validate the entry before creation
+    let warnings = ValidationService::validate_meal_entry(
+        pool.inner(),
+        entry.meal_option_id,
+        entry.slot_type.clone(),
+        entry.date,
+    )
+    .await?;
+
+    // If validation passed, create the entry
+    let created_entry = MealEntryRepository::create(pool.inner(), entry).await?;
+
+    Ok((created_entry, warnings))
 }
 
 /// Update an existing meal entry
@@ -140,6 +155,25 @@ pub async fn update_entry(
 #[tauri::command]
 pub async fn delete_entry(id: i64, pool: State<'_, SqlitePool>) -> ApiResult<()> {
     MealEntryRepository::delete(pool.inner(), id)
+        .await
+        .map_err(Into::into)
+}
+
+/// Validate a potential meal entry without creating it
+/// Returns warnings if any (e.g., tag suggestions exceeded)
+/// Returns error if validation fails (e.g., incompatible slot, weekly limit exceeded)
+#[tauri::command]
+pub async fn validate_entry(
+    meal_option_id: i64,
+    slot: SlotType,
+    date: String, // Format: "YYYY-MM-DD"
+    pool: State<'_, SqlitePool>,
+) -> ApiResult<Vec<ValidationWarning>> {
+    let date = NaiveDate::parse_from_str(&date, "%Y-%m-%d").map_err(|e| {
+        crate::error::ApiError::ValidationError(format!("Invalid date format: {}", e))
+    })?;
+
+    ValidationService::validate_meal_entry(pool.inner(), meal_option_id, slot, date)
         .await
         .map_err(Into::into)
 }
@@ -598,5 +632,142 @@ mod tests {
         assert_eq!(usage.usage_count, 2);
         assert_eq!(usage.tag_name, "pasta");
         assert_eq!(usage.tag_id, tag_id);
+    }
+
+    #[tokio::test]
+    async fn test_create_entry_with_validation() {
+        use crate::services::ValidationService;
+
+        let pool = setup_test_pool().await;
+
+        // Create a template with weekly limit
+        let template = CreateMealTemplate {
+            name: "Limited Template".to_string(),
+            description: None,
+            compatible_slots: vec![SlotType::Breakfast],
+            location_type: LocationType::Home,
+            weekly_limit: Some(2),
+        };
+        let template_id = MealTemplateRepository::create(&pool, template)
+            .await
+            .expect("Failed to create template")
+            .id;
+
+        let option = CreateMealOption {
+            template_id,
+            name: "Test Option".to_string(),
+            description: None,
+            nutritional_notes: None,
+        };
+        let option_id = MealOptionRepository::create(&pool, option)
+            .await
+            .expect("Failed to create option")
+            .id;
+
+        let date = NaiveDate::from_ymd_opt(2024, 11, 4).unwrap();
+
+        // First entry should pass validation
+        let warnings1 =
+            ValidationService::validate_meal_entry(&pool, option_id, SlotType::Breakfast, date)
+                .await
+                .expect("First entry validation should pass");
+        assert!(warnings1.is_empty());
+
+        let entry1 = CreateMealEntry {
+            meal_option_id: option_id,
+            date,
+            slot_type: SlotType::Breakfast,
+            location: LocationType::Home,
+            servings: None,
+            notes: None,
+            completed: Some(true),
+        };
+        MealEntryRepository::create(&pool, entry1)
+            .await
+            .expect("First entry should be created");
+
+        // Second entry should pass validation
+        let warnings2 = ValidationService::validate_meal_entry(
+            &pool,
+            option_id,
+            SlotType::Breakfast,
+            date + chrono::Duration::days(1),
+        )
+        .await
+        .expect("Second entry validation should pass");
+        assert!(warnings2.is_empty());
+
+        let entry2 = CreateMealEntry {
+            meal_option_id: option_id,
+            date: date + chrono::Duration::days(1),
+            slot_type: SlotType::Breakfast,
+            location: LocationType::Home,
+            servings: None,
+            notes: None,
+            completed: Some(true),
+        };
+        MealEntryRepository::create(&pool, entry2)
+            .await
+            .expect("Second entry should be created");
+
+        // Third entry should fail validation due to weekly limit
+        let result = ValidationService::validate_meal_entry(
+            &pool,
+            option_id,
+            SlotType::Breakfast,
+            date + chrono::Duration::days(2),
+        )
+        .await;
+        assert!(result.is_err());
+
+        // Verify it's a weekly limit error
+        assert!(matches!(
+            result,
+            Err(crate::services::ValidationError::WeeklyLimitExceeded { .. })
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_create_entry_incompatible_slot() {
+        use crate::services::ValidationService;
+
+        let pool = setup_test_pool().await;
+
+        // Create a template only compatible with Breakfast
+        let template = CreateMealTemplate {
+            name: "Breakfast Only".to_string(),
+            description: None,
+            compatible_slots: vec![SlotType::Breakfast],
+            location_type: LocationType::Home,
+            weekly_limit: None,
+        };
+        let template_id = MealTemplateRepository::create(&pool, template)
+            .await
+            .expect("Failed to create template")
+            .id;
+
+        let option = CreateMealOption {
+            template_id,
+            name: "Test Option".to_string(),
+            description: None,
+            nutritional_notes: None,
+        };
+        let option_id = MealOptionRepository::create(&pool, option)
+            .await
+            .expect("Failed to create option")
+            .id;
+
+        let date = NaiveDate::from_ymd_opt(2024, 11, 4).unwrap();
+
+        // Try to validate entry for incompatible slot (Dinner)
+        let result =
+            ValidationService::validate_meal_entry(&pool, option_id, SlotType::Dinner, date).await;
+        assert!(result.is_err());
+
+        // Verify it's an incompatible slot error
+        assert!(matches!(
+            result,
+            Err(crate::services::ValidationError::IncompatibleSlot { .. })
+        ));
     }
 }
