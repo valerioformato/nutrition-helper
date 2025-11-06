@@ -205,6 +205,7 @@ We are in Phase 0: Setting up the project scaffolding. Next steps will be buildi
   - Frontend: `npm test` for unit tests, `npm run test:coverage` for coverage
 - **Run Clippy Before Committing**: Always run `cargo clippy --lib --tests -- -D warnings -A dead_code -A unused_imports` before committing to ensure code quality
 - **Verify Coverage**: Ensure new code meets coverage targets (85% backend, 70% frontend)
+- **Manual UI/UX Testing Required**: After ANY UI/UX change (components, views, styling, interactions), ALWAYS stop and ask the user to test manually before proceeding
 - **Test Before Moving On**: After completing any task, ALWAYS ask the user to test the app before moving to the next task
 - Build incrementally and verify each step works
 - Don't proceed to new features until current ones are confirmed working
