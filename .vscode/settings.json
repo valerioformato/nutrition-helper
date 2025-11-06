@@ -66,6 +66,8 @@
     "cargo build": true,
     "npm run build": true,
     "npm run tauri": true,
+    "npm run check": true,
+    "npx vitest run": true,
     "git fetch": true,
     "git remote": true,
     "cargo test --lib --verbose 2>&1 | grep -E \"(test result:|running|passed|failed)\"": {
