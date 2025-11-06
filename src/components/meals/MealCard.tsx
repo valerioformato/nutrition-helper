@@ -1,4 +1,4 @@
-import { MealEntry, MealOption, MealTemplate, LocationType } from "../../lib/types";
+import { LocationType, MealEntry, MealOption, MealTemplate } from "../../lib/types";
 
 interface MealCardProps {
   entry: MealEntry;

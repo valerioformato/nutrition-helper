@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { MealSlot } from "../components/meals/MealSlot";
 import { MealCard } from "../components/meals/MealCard";
+import { MealSlot } from "../components/meals/MealSlot";
+import { MealSelectionModal } from "../components/meals/MealSelectionModal";
 import {
-  SlotType,
-  LocationType,
-  MealEntry,
-  MealOption,
-  MealTemplate,
+    LocationType,
+    MealEntry,
+    MealOption,
+    MealTemplate,
+    SlotType,
 } from "../lib/types";
 
 /**
@@ -15,6 +16,8 @@ import {
  */
 export function DailyView() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<SlotType | null>(null);
 
   // All 5 meal slots in order
   const slots: SlotType[] = [
@@ -188,10 +191,8 @@ export function DailyView() {
                 onAddMeal={
                   isEmpty
                     ? () => {
-                        console.log(
-                          `Add meal to ${getSlotDisplayName(slot)}`
-                        );
-                        // TODO: Open meal selection modal (Task 6)
+                        setSelectedSlot(slot);
+                        setModalOpen(true);
                       }
                     : undefined
                 }
@@ -216,6 +217,23 @@ export function DailyView() {
           })}
         </div>
       </div>
+
+      {/* Meal Selection Modal */}
+      {selectedSlot && (
+        <MealSelectionModal
+          isOpen={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setSelectedSlot(null);
+          }}
+          slotType={selectedSlot}
+          slotName={getSlotDisplayName(selectedSlot)}
+          onSelectTemplate={(template) => {
+            console.log("Selected template:", template);
+            // TODO: Task 7 - Open option selection or save entry
+          }}
+        />
+      )}
     </div>
   );
 }
