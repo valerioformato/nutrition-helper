@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MealCard } from "../components/meals/MealCard";
 import { MealSelectionModal } from "../components/meals/MealSelectionModal";
 import { MealSlot } from "../components/meals/MealSlot";
 import { OptionSelectionModal } from "../components/meals/OptionSelectionModal";
+import { getEntriesByDate, getOptionById, getTemplateById } from "../lib/api";
 import {
     MealEntry,
     MealOption,
     MealTemplate,
     SlotType,
 } from "../lib/types";
-import { getEntriesByDate, getOptionById, getTemplateById } from "../lib/api";
 
 // Helper type for entry with full meal details
 interface EntryWithDetails {
