@@ -1191,7 +1191,60 @@ npm test MealCard.test.tsx
 7. **Use Test Data Builders**: Create reusable functions for test data
 8. **Clean Up After Tests**: Ensure tests don't leave artifacts or state
 
-### 9.6 Continuous Integration (Phase 7)
+### 9.6 Integration Testing Strategy (Tauri-Specific)
+
+**Key Lessons Learned from Phase 1:**
+
+1. **Don't Fight the Framework**
+
+   - Tauri State is hard to mock in integration tests; use it where it's natural (command module tests)
+   - Command modules are the perfect place for end-to-end integration tests
+   - Keep integration tests in separate files focused on what matters
+
+2. **Test What Can Actually Break**
+
+   - In Tauri apps, the critical integration point is the IPC boundary
+   - IPC serialization failures are runtime disasters that won't be caught by type checking
+   - Focus integration tests on serialization/deserialization of all types that cross IPC
+
+3. **Avoid Test Duplication**
+
+   - If command modules already have comprehensive integration tests (database, state, persistence), don't duplicate them
+   - Leverage existing test coverage and add complementary tests
+   - Document where integration coverage exists to avoid confusion
+
+4. **Complementary Test Suites**
+   - **Command module tests**: Full end-to-end flows (Command → Repository → Database)
+     - Use real `tauri::State`
+     - Test actual database operations
+     - Verify business logic
+   - **Separate integration tests**: IPC serialization verification
+     - Ensure all types can cross IPC boundary
+     - Verify JSON roundtrips
+     - Test enum conversions
+     - No database needed (fast)
+
+**Our Integration Testing Approach:**
+
+```
+Command Module Tests (109 tests)          Integration Tests (12 tests)
+- Full stack integration                  - IPC serialization focus
+- Database operations                     - Type safety across boundary
+- Business logic validation               - JSON roundtrips
+- Error handling                          - Enum conversions
+- Use tauri::State                        - Fast, no DB setup
+```
+
+**Benefits:**
+
+- ✅ No duplication
+- ✅ Targets real risks (IPC failures)
+- ✅ Fast test execution
+- ✅ Clear, focused purpose
+- ✅ Easy to maintain
+- ✅ Documents architecture decisions
+
+### 9.7 Continuous Integration (Phase 7)
 
 **GitHub Actions Workflow:**
 

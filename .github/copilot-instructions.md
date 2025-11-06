@@ -140,6 +140,29 @@ src-tauri/
 - One logical assertion per test
 - Use `#[tokio::test]` for async tests
 
+**Integration Testing Strategy (Tauri-Specific):**
+
+Key lessons learned from Phase 1:
+
+1. **Don't Fight the Framework**
+   - Tauri State is hard to mock; use it naturally in command module tests
+   - Command modules are perfect for end-to-end integration tests
+   - Keep separate integration tests focused on critical concerns (IPC serialization)
+
+2. **Test What Can Break**
+   - In Tauri apps, the IPC boundary is the critical integration point
+   - IPC serialization failures are runtime disasters
+   - Focus integration tests on verifying all types can cross IPC boundary
+
+3. **Avoid Duplication**
+   - If command modules have comprehensive integration tests, don't duplicate
+   - Leverage existing coverage and add complementary tests
+   - Document where integration coverage exists
+
+4. **Complementary Test Suites**
+   - Command module tests: Full end-to-end flows (Command → Repository → Database)
+   - Separate integration tests: IPC serialization verification (fast, no DB)
+
 ## File Organization
 
 Follow the structure outlined in DEVELOPMENT_PLAN.md Section 6:
