@@ -113,11 +113,16 @@ Follow the phased approach in DEVELOPMENT_PLAN.md:
 - Test both happy paths and error cases
 - Run tests before committing: `cargo test`
 
-**Frontend Testing (Phase 7):**
+**Frontend Testing (Now Available!):**
 
+- **Testing framework**: Vitest + React Testing Library (configured and ready)
 - Write unit tests for utilities and helpers
 - Write component tests for React components
-- Use Vitest + React Testing Library
+- Test user interactions and state changes
+- Mock Tauri commands using `vi.mock('@tauri-apps/api/core')`
+- Run tests: `npm test` (watch mode) or `npm run test:coverage`
+- **Target 70%+ test coverage** for frontend code
+- See `TESTING_FRONTEND.md` for detailed guide
 - Test user interactions and state changes
 - Run tests before committing: `npm test`
 
@@ -145,16 +150,19 @@ src-tauri/
 Key lessons learned from Phase 1:
 
 1. **Don't Fight the Framework**
+
    - Tauri State is hard to mock; use it naturally in command module tests
    - Command modules are perfect for end-to-end integration tests
    - Keep separate integration tests focused on critical concerns (IPC serialization)
 
 2. **Test What Can Break**
+
    - In Tauri apps, the IPC boundary is the critical integration point
    - IPC serialization failures are runtime disasters
    - Focus integration tests on verifying all types can cross IPC boundary
 
 3. **Avoid Duplication**
+
    - If command modules have comprehensive integration tests, don't duplicate
    - Leverage existing coverage and add complementary tests
    - Document where integration coverage exists
@@ -191,14 +199,16 @@ We are in Phase 0: Setting up the project scaffolding. Next steps will be buildi
 
 ## Development Workflow
 
-- **Test-Driven Development**: Write tests alongside or before implementation (from Phase 1)
-- **Run Tests Frequently**: Execute `cargo test` after every significant change
+- **Test-Driven Development**: Write tests alongside or before implementation
+- **Run Tests Frequently**: 
+  - Backend: `cargo test` after every significant change
+  - Frontend: `npm test` for unit tests, `npm run test:coverage` for coverage
 - **Run Clippy Before Committing**: Always run `cargo clippy --lib --tests -- -D warnings -A dead_code -A unused_imports` before committing to ensure code quality
-- **Verify Coverage**: Ensure new code meets coverage targets before moving on
+- **Verify Coverage**: Ensure new code meets coverage targets (85% backend, 70% frontend)
 - **Test Before Moving On**: After completing any task, ALWAYS ask the user to test the app before moving to the next task
 - Build incrementally and verify each step works
 - Don't proceed to new features until current ones are confirmed working
-- **All code must have tests** - no exceptions for backend code from Phase 1 onwards
+- **All code must have tests** - no exceptions for backend code from Phase 1 onwards, frontend when available
 
 ## Platform-Specific Notes
 

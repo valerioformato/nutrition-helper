@@ -9,6 +9,9 @@
         "preview": "vite preview",
         "check": "tsc --noEmit",
         "lint": "echo 'Linting not configured yet'",
+        "test": "vitest",
+        "test:ui": "vitest --ui",
+        "test:coverage": "vitest --coverage",
         "tauri": "tauri",
         "tauri:dev": "tauri dev",
         "tauri:dev:linux": "WEBKIT_DISABLE_DMABUF_RENDERER=1 tauri dev",
@@ -22,13 +25,20 @@
     },
     "devDependencies": {
         "@tauri-apps/cli": "^2.0.0",
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.0",
+        "@testing-library/user-event": "^14.6.1",
+        "@types/node": "^24.10.0",
         "@types/react": "^18.3.3",
         "@types/react-dom": "^18.3.0",
         "@vitejs/plugin-react": "^4.3.1",
+        "@vitest/ui": "^4.0.7",
         "autoprefixer": "^10.4.21",
+        "jsdom": "^27.1.0",
         "postcss": "^8.5.6",
         "tailwindcss": "^3.4.18",
         "typescript": "^5.5.3",
-        "vite": "^5.3.1"
+        "vite": "^5.3.1",
+        "vitest": "^4.0.7"
     }
 }
