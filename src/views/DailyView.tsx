@@ -1,15 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MealCard } from "../components/meals/MealCard";
 import { MealSelectionModal } from "../components/meals/MealSelectionModal";
-import { OptionSelectionModal } from "../components/meals/OptionSelectionModal";
 import { MealSlot } from "../components/meals/MealSlot";
+import { OptionSelectionModal } from "../components/meals/OptionSelectionModal";
 import {
-    LocationType,
     MealEntry,
     MealOption,
     MealTemplate,
     SlotType,
 } from "../lib/types";
+import { getEntriesByDate, getOptionById, getTemplateById } from "../lib/api";
+
+// Helper type for entry with full meal details
+interface EntryWithDetails {
+  entry: MealEntry;
+  option: MealOption;
+  template: MealTemplate;
+}
 
 /**
  * DailyView - Main view for displaying daily meal slots
@@ -23,6 +30,61 @@ export function DailyView() {
   const [selectedTemplate, setSelectedTemplate] = useState<MealTemplate | null>(
     null
   );
+  
+  // Entries data
+  const [entries, setEntries] = useState<Map<SlotType, EntryWithDetails>>(
+    new Map()
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch entries when date changes
+  useEffect(() => {
+    loadEntries();
+  }, [selectedDate]);
+
+  const loadEntries = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const dateStr = selectedDate.toISOString().split("T")[0];
+      const dayEntries = await getEntriesByDate(dateStr);
+
+      // Fetch full details for each entry
+      const entriesMap = new Map<SlotType, EntryWithDetails>();
+      
+      for (const entry of dayEntries) {
+        try {
+          const option = await getOptionById(entry.meal_option_id);
+          if (!option) {
+            console.error(`Option not found for entry ${entry.id}`);
+            continue;
+          }
+          
+          const template = await getTemplateById(option.template_id);
+          if (!template) {
+            console.error(`Template not found for option ${option.id}`);
+            continue;
+          }
+          
+          entriesMap.set(entry.slot_type, {
+            entry,
+            option,
+            template,
+          });
+        } catch (err) {
+          console.error(`Failed to load details for entry ${entry.id}:`, err);
+        }
+      }
+
+      setEntries(entriesMap);
+    } catch (err) {
+      console.error("Failed to load entries:", err);
+      setError("Failed to load meals. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // All 5 meal slots in order
   const slots: SlotType[] = [
@@ -70,41 +132,6 @@ export function DailyView() {
       selectedDate.getMonth() === today.getMonth() &&
       selectedDate.getFullYear() === today.getFullYear()
     );
-  };
-
-  // Sample data to demonstrate MealCard (TODO: Remove in Task 8 when fetching real data)
-  const sampleTemplate: MealTemplate = {
-    id: 1,
-    name: "Yogurt con cereali e frutta secca",
-    description: "A healthy breakfast option",
-    compatible_slots: [SlotType.Breakfast],
-    location_type: LocationType.Home,
-    weekly_limit: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
-  const sampleOption: MealOption = {
-    id: 1,
-    template_id: 1,
-    name: "Greek yogurt with granola",
-    description: "Low-fat greek yogurt with homemade granola",
-    nutritional_notes: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
-  const sampleEntry: MealEntry = {
-    id: 1,
-    meal_option_id: 1,
-    date: selectedDate.toISOString().split("T")[0],
-    slot_type: SlotType.Breakfast,
-    location: LocationType.Home,
-    servings: 1.0,
-    notes: "Added extra blueberries today",
-    completed: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
   };
 
   return (
@@ -182,44 +209,68 @@ export function DailyView() {
 
         {/* Meal Slots Timeline */}
         <div className="space-y-4">
-          {slots.map((slot) => {
-            // Show sample filled breakfast slot for demonstration
-            const isBreakfast = slot === SlotType.Breakfast;
-            const isEmpty = !isBreakfast;
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-8 text-gray-500">
+              Loading meals...
+            </div>
+          )}
 
-            return (
-              <MealSlot
-                key={slot}
-                slotType={slot}
-                slotName={getSlotDisplayName(slot)}
-                isEmpty={isEmpty}
-                onAddMeal={
-                  isEmpty
-                    ? () => {
-                        setSelectedSlot(slot);
-                        setTemplateModalOpen(true);
-                      }
-                    : undefined
-                }
-                onClick={
-                  !isEmpty
-                    ? () => {
-                        console.log(`Edit meal in ${getSlotDisplayName(slot)}`);
-                        // TODO: Open meal detail editor (Phase 4)
-                      }
-                    : undefined
-                }
+          {/* Error State */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <p className="text-red-800">{error}</p>
+              <button
+                onClick={loadEntries}
+                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
               >
-                {!isEmpty && (
-                  <MealCard
-                    entry={sampleEntry}
-                    option={sampleOption}
-                    template={sampleTemplate}
-                  />
-                )}
-              </MealSlot>
-            );
-          })}
+                Try again
+              </button>
+            </div>
+          )}
+
+          {/* Meal Slots */}
+          {!loading &&
+            !error &&
+            slots.map((slot) => {
+              const entryWithDetails = entries.get(slot);
+              const isEmpty = !entryWithDetails;
+
+              return (
+                <MealSlot
+                  key={slot}
+                  slotType={slot}
+                  slotName={getSlotDisplayName(slot)}
+                  isEmpty={isEmpty}
+                  onAddMeal={
+                    isEmpty
+                      ? () => {
+                          setSelectedSlot(slot);
+                          setTemplateModalOpen(true);
+                        }
+                      : undefined
+                  }
+                  onClick={
+                    !isEmpty
+                      ? () => {
+                          console.log(
+                            `Edit meal in ${getSlotDisplayName(slot)}`
+                          );
+                          // TODO: Open meal detail editor (Phase 4)
+                        }
+                      : undefined
+                  }
+                >
+                  {entryWithDetails && (
+                    <MealCard
+                      entry={entryWithDetails.entry}
+                      option={entryWithDetails.option}
+                      template={entryWithDetails.template}
+                    />
+                  )}
+                </MealSlot>
+              );
+            })}
         </div>
       </div>
 
@@ -255,8 +306,8 @@ export function DailyView() {
           slotName={getSlotDisplayName(selectedSlot)}
           date={selectedDate.toISOString().split("T")[0]}
           onSuccess={() => {
-            // TODO: Task 8 - Refresh entries to show newly added meal
-            console.log("Meal saved successfully!");
+            // Refresh entries to show the newly added meal
+            loadEntries();
           }}
         />
       )}
