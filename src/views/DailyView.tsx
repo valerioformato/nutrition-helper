@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { MealCard } from "../components/meals/MealCard";
-import { MealSlot } from "../components/meals/MealSlot";
 import { MealSelectionModal } from "../components/meals/MealSelectionModal";
+import { OptionSelectionModal } from "../components/meals/OptionSelectionModal";
+import { MealSlot } from "../components/meals/MealSlot";
 import {
     LocationType,
     MealEntry,
@@ -16,8 +17,12 @@ import {
  */
 export function DailyView() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [modalOpen, setModalOpen] = useState(false);
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [optionModalOpen, setOptionModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<SlotType | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<MealTemplate | null>(
+    null
+  );
 
   // All 5 meal slots in order
   const slots: SlotType[] = [
@@ -192,7 +197,7 @@ export function DailyView() {
                   isEmpty
                     ? () => {
                         setSelectedSlot(slot);
-                        setModalOpen(true);
+                        setTemplateModalOpen(true);
                       }
                     : undefined
                 }
@@ -218,19 +223,40 @@ export function DailyView() {
         </div>
       </div>
 
-      {/* Meal Selection Modal */}
+      {/* Meal Selection Modal - Step 1: Choose Template */}
       {selectedSlot && (
         <MealSelectionModal
-          isOpen={modalOpen}
+          isOpen={templateModalOpen}
           onClose={() => {
-            setModalOpen(false);
+            setTemplateModalOpen(false);
             setSelectedSlot(null);
           }}
           slotType={selectedSlot}
           slotName={getSlotDisplayName(selectedSlot)}
           onSelectTemplate={(template) => {
-            console.log("Selected template:", template);
-            // TODO: Task 7 - Open option selection or save entry
+            setSelectedTemplate(template);
+            setTemplateModalOpen(false);
+            setOptionModalOpen(true);
+          }}
+        />
+      )}
+
+      {/* Option Selection Modal - Step 2: Choose Option & Configure */}
+      {selectedSlot && selectedTemplate && (
+        <OptionSelectionModal
+          isOpen={optionModalOpen}
+          onClose={() => {
+            setOptionModalOpen(false);
+            setSelectedTemplate(null);
+            setSelectedSlot(null);
+          }}
+          template={selectedTemplate}
+          slotType={selectedSlot}
+          slotName={getSlotDisplayName(selectedSlot)}
+          date={selectedDate.toISOString().split("T")[0]}
+          onSuccess={() => {
+            // TODO: Task 8 - Refresh entries to show newly added meal
+            console.log("Meal saved successfully!");
           }}
         />
       )}

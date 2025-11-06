@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Modal } from "../common/Modal";
-import { MealTemplate, SlotType } from "../../lib/types";
+import { useEffect, useState } from "react";
 import { getAllTemplates } from "../../lib/api";
+import { MealTemplate, SlotType } from "../../lib/types";
+import { Modal } from "../common/Modal";
 
 interface MealSelectionModalProps {
   isOpen: boolean;
