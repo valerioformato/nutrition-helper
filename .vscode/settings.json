@@ -60,7 +60,21 @@
   // Recommended extensions
   "extensions.ignoreRecommendations": false,
   "chat.tools.terminal.autoApprove": {
-    "cargo test": true
+    "cargo test": true,
+    "npm run build": true,
+    "cargo build": true,
+    "npm run tauri": true,
+    "git fetch": true,
+    "git remote": true,
+    "cargo test --lib --verbose 2>&1 | grep -E \"(test result:|running|passed|failed)\"": {
+        "approve": true,
+        "matchCommandLine": true
+    },
+    "cargo build 2>&1 | grep -E \"(warning:|error:|Finished)\"": {
+        "approve": true,
+        "matchCommandLine": true
+    },
+    "gh": true
   },
 
 }

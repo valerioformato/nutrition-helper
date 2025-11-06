@@ -75,6 +75,31 @@ pub fn run() {
             commands::create_template,
             commands::update_template,
             commands::delete_template,
+            // MealOption commands
+            commands::get_all_options,
+            commands::get_option_by_id,
+            commands::get_option_with_tags,
+            commands::get_options_by_template,
+            commands::get_options_by_template_with_tags,
+            commands::search_options,
+            commands::create_option,
+            commands::update_option,
+            commands::delete_option,
+            commands::add_tags_to_option,
+            commands::remove_tags_from_option,
+            commands::set_option_tags,
+            // MealEntry commands
+            commands::get_entry_by_id,
+            commands::get_entries_by_date,
+            commands::get_entries_by_date_range,
+            commands::get_entry_by_date_and_slot,
+            commands::get_entries_by_completed,
+            commands::get_entries_by_meal_option,
+            commands::get_weekly_usage,
+            commands::get_weekly_tag_usage,
+            commands::create_entry,
+            commands::update_entry,
+            commands::delete_entry,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
