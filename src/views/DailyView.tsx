@@ -1,6 +1,13 @@
 import { useState } from "react";
-import { SlotType } from "../lib/types";
 import { MealSlot } from "../components/meals/MealSlot";
+import { MealCard } from "../components/meals/MealCard";
+import {
+  SlotType,
+  LocationType,
+  MealEntry,
+  MealOption,
+  MealTemplate,
+} from "../lib/types";
 
 /**
  * DailyView - Main view for displaying daily meal slots
@@ -55,6 +62,41 @@ export function DailyView() {
       selectedDate.getMonth() === today.getMonth() &&
       selectedDate.getFullYear() === today.getFullYear()
     );
+  };
+
+  // Sample data to demonstrate MealCard (TODO: Remove in Task 8 when fetching real data)
+  const sampleTemplate: MealTemplate = {
+    id: 1,
+    name: "Yogurt con cereali e frutta secca",
+    description: "A healthy breakfast option",
+    compatible_slots: [SlotType.Breakfast],
+    location_type: LocationType.Home,
+    weekly_limit: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const sampleOption: MealOption = {
+    id: 1,
+    template_id: 1,
+    name: "Greek yogurt with granola",
+    description: "Low-fat greek yogurt with homemade granola",
+    nutritional_notes: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const sampleEntry: MealEntry = {
+    id: 1,
+    meal_option_id: 1,
+    date: selectedDate.toISOString().split("T")[0],
+    slot_type: SlotType.Breakfast,
+    location: LocationType.Home,
+    servings: 1.0,
+    notes: "Added extra blueberries today",
+    completed: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 
   return (
@@ -132,18 +174,46 @@ export function DailyView() {
 
         {/* Meal Slots Timeline */}
         <div className="space-y-4">
-          {slots.map((slot) => (
-            <MealSlot
-              key={slot}
-              slotType={slot}
-              slotName={getSlotDisplayName(slot)}
-              isEmpty={true}
-              onAddMeal={() => {
-                console.log(`Add meal to ${getSlotDisplayName(slot)}`);
-                // TODO: Open meal selection modal (Task 6)
-              }}
-            />
-          ))}
+          {slots.map((slot) => {
+            // Show sample filled breakfast slot for demonstration
+            const isBreakfast = slot === SlotType.Breakfast;
+            const isEmpty = !isBreakfast;
+
+            return (
+              <MealSlot
+                key={slot}
+                slotType={slot}
+                slotName={getSlotDisplayName(slot)}
+                isEmpty={isEmpty}
+                onAddMeal={
+                  isEmpty
+                    ? () => {
+                        console.log(
+                          `Add meal to ${getSlotDisplayName(slot)}`
+                        );
+                        // TODO: Open meal selection modal (Task 6)
+                      }
+                    : undefined
+                }
+                onClick={
+                  !isEmpty
+                    ? () => {
+                        console.log(`Edit meal in ${getSlotDisplayName(slot)}`);
+                        // TODO: Open meal detail editor (Phase 4)
+                      }
+                    : undefined
+                }
+              >
+                {!isEmpty && (
+                  <MealCard
+                    entry={sampleEntry}
+                    option={sampleOption}
+                    template={sampleTemplate}
+                  />
+                )}
+              </MealSlot>
+            );
+          })}
         </div>
       </div>
     </div>
