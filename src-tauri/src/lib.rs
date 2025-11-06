@@ -66,6 +66,15 @@ pub fn run() {
             commands::create_tag,
             commands::update_tag,
             commands::delete_tag,
+            // MealTemplate commands
+            commands::get_all_templates,
+            commands::get_template_by_id,
+            commands::get_templates_by_location,
+            commands::get_templates_by_slot,
+            commands::search_templates,
+            commands::create_template,
+            commands::update_template,
+            commands::delete_template,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
