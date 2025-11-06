@@ -14,6 +14,7 @@ pub struct MealTemplate {
     pub description: Option<String>,
     pub compatible_slots: Vec<SlotType>, // Which slots can this template fill
     pub location_type: LocationType,     // Where this meal can be prepared
+    pub weekly_limit: Option<i32>,       // Hard limit: max times per week (NULL = unlimited)
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -26,6 +27,7 @@ pub struct MealTemplateRow {
     pub description: Option<String>,
     pub compatible_slots: String, // JSON string from DB
     pub location_type: String,    // TEXT from DB
+    pub weekly_limit: Option<i32>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -45,6 +47,7 @@ impl TryFrom<MealTemplateRow> for MealTemplate {
             description: row.description,
             compatible_slots,
             location_type,
+            weekly_limit: row.weekly_limit,
             created_at: row.created_at,
             updated_at: row.updated_at,
         })
@@ -58,6 +61,7 @@ pub struct CreateMealTemplate {
     pub description: Option<String>,
     pub compatible_slots: Vec<SlotType>,
     pub location_type: LocationType,
+    pub weekly_limit: Option<i32>,
 }
 
 /// Input for updating an existing meal template
@@ -67,6 +71,7 @@ pub struct UpdateMealTemplate {
     pub description: Option<Option<String>>, // None = no change, Some(None) = clear
     pub compatible_slots: Option<Vec<SlotType>>,
     pub location_type: Option<LocationType>,
+    pub weekly_limit: Option<Option<i32>>, // None = no change, Some(None) = clear, Some(Some(n)) = set to n
 }
 
 impl CreateMealTemplate {
@@ -78,6 +83,12 @@ impl CreateMealTemplate {
 
         if self.compatible_slots.is_empty() {
             return Err("Template must be compatible with at least one slot".to_string());
+        }
+
+        if let Some(limit) = self.weekly_limit {
+            if limit <= 0 {
+                return Err("Weekly limit must be positive".to_string());
+            }
         }
 
         Ok(())
@@ -108,6 +119,7 @@ mod tests {
             description: Some("Breakfast bread with jam".to_string()),
             compatible_slots: vec![SlotType::Breakfast, SlotType::MorningSnack],
             location_type: LocationType::Home,
+            weekly_limit: Some(3),
         };
         assert!(valid.validate().is_ok());
 
@@ -117,6 +129,7 @@ mod tests {
             description: None,
             compatible_slots: vec![SlotType::Breakfast],
             location_type: LocationType::Home,
+            weekly_limit: None,
         };
         assert!(invalid.validate().is_err());
 
@@ -126,6 +139,27 @@ mod tests {
             description: None,
             compatible_slots: vec![],
             location_type: LocationType::Home,
+            weekly_limit: None,
+        };
+        assert!(invalid.validate().is_err());
+
+        // Invalid weekly limit (zero)
+        let invalid = CreateMealTemplate {
+            name: "Test".to_string(),
+            description: None,
+            compatible_slots: vec![SlotType::Breakfast],
+            location_type: LocationType::Home,
+            weekly_limit: Some(0),
+        };
+        assert!(invalid.validate().is_err());
+
+        // Invalid weekly limit (negative)
+        let invalid = CreateMealTemplate {
+            name: "Test".to_string(),
+            description: None,
+            compatible_slots: vec![SlotType::Breakfast],
+            location_type: LocationType::Home,
+            weekly_limit: Some(-1),
         };
         assert!(invalid.validate().is_err());
     }
@@ -137,6 +171,7 @@ mod tests {
             description: None,
             compatible_slots: vec![SlotType::Breakfast, SlotType::MorningSnack],
             location_type: LocationType::Any,
+            weekly_limit: None,
         };
 
         assert!(template.compatible_slots.contains(&SlotType::Breakfast));
@@ -150,6 +185,7 @@ mod tests {
             description: Some("Whole wheat pasta with vegetables".to_string()),
             compatible_slots: vec![SlotType::Lunch, SlotType::Dinner],
             location_type: LocationType::Home,
+            weekly_limit: Some(4),
         };
 
         let json = serde_json::to_string(&template).unwrap();
@@ -157,6 +193,7 @@ mod tests {
 
         assert_eq!(deserialized.name, template.name);
         assert_eq!(deserialized.compatible_slots.len(), 2);
+        assert_eq!(deserialized.weekly_limit, Some(4));
     }
 
     #[test]

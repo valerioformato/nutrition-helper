@@ -1,4 +1,7 @@
 // Services module
 // Business logic layer
 
-// Services will be implemented in Phase 1
+pub mod validation_service;
+
+// Re-export for convenient access
+pub use validation_service::{ValidationError, ValidationService, ValidationWarning, WarningType};

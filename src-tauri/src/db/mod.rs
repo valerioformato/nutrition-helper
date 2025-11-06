@@ -134,22 +134,23 @@ mod tests {
 
         let index_names: Vec<String> = indexes.into_iter().map(|(name,)| name).collect();
 
-        // Verify indexes exist (5 indexes total after schema update)
+        // Verify indexes exist (10 indexes total after adding weekly_limit index)
         assert!(index_names.contains(&"idx_meal_entries_date".to_string()));
         assert!(index_names.contains(&"idx_meal_entries_option".to_string()));
         assert!(index_names.contains(&"idx_meal_entries_date_slot".to_string()));
         assert!(index_names.contains(&"idx_meal_options_template".to_string()));
         assert!(index_names.contains(&"idx_meal_templates_location".to_string()));
+        assert!(index_names.contains(&"idx_meal_templates_weekly_limit".to_string()));
         assert!(index_names.contains(&"idx_tags_category".to_string()));
         assert!(index_names.contains(&"idx_tags_parent".to_string()));
         assert!(index_names.contains(&"idx_meal_option_tags_option".to_string()));
         assert!(index_names.contains(&"idx_meal_option_tags_tag".to_string()));
 
-        // Should have exactly 9 indexes (5 original + 4 for tags system)
+        // Should have exactly 10 indexes (9 original + 1 for weekly_limit)
         assert_eq!(
             index_names.len(),
-            9,
-            "Expected 9 indexes, found: {:?}",
+            10,
+            "Expected 10 indexes, found: {:?}",
             index_names
         );
     }

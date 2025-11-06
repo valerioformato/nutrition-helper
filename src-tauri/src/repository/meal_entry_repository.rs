@@ -339,6 +339,7 @@ mod tests {
             description: Some("Test Description".to_string()),
             location_type: LocationType::Home,
             compatible_slots: vec![SlotType::Breakfast, SlotType::Lunch],
+            weekly_limit: None,
         };
         let template = MealTemplateRepository::create(pool, template)
             .await

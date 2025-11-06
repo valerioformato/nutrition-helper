@@ -29,6 +29,7 @@ impl MealTemplateRepository {
             description: row.try_get("description")?,
             compatible_slots,
             location_type,
+            weekly_limit: row.try_get("weekly_limit")?,
             created_at: row.try_get("created_at")?,
             updated_at: row.try_get("updated_at")?,
         })
@@ -44,15 +45,16 @@ impl MealTemplateRepository {
 
         let row = sqlx::query(
             r#"
-            INSERT INTO meal_templates (name, description, compatible_slots, location_type)
-            VALUES (?1, ?2, ?3, ?4)
-            RETURNING id, name, description, compatible_slots, location_type, created_at, updated_at
+            INSERT INTO meal_templates (name, description, compatible_slots, location_type, weekly_limit)
+            VALUES (?1, ?2, ?3, ?4, ?5)
+            RETURNING id, name, description, compatible_slots, location_type, weekly_limit, created_at, updated_at
             "#,
         )
         .bind(&template.name)
         .bind(&template.description)
         .bind(&compatible_slots_json)
         .bind(location_str)
+        .bind(template.weekly_limit)
         .fetch_one(pool)
         .await?;
 
@@ -63,7 +65,7 @@ impl MealTemplateRepository {
     pub async fn get_by_id(pool: &SqlitePool, id: i64) -> Result<Option<MealTemplate>> {
         let row = sqlx::query(
             r#"
-            SELECT id, name, description, compatible_slots, location_type, created_at, updated_at
+            SELECT id, name, description, compatible_slots, location_type, weekly_limit, created_at, updated_at
             FROM meal_templates
             WHERE id = ?1
             "#,
@@ -82,7 +84,7 @@ impl MealTemplateRepository {
     pub async fn get_all(pool: &SqlitePool) -> Result<Vec<MealTemplate>> {
         let rows = sqlx::query(
             r#"
-            SELECT id, name, description, compatible_slots, location_type, created_at, updated_at
+            SELECT id, name, description, compatible_slots, location_type, weekly_limit, created_at, updated_at
             FROM meal_templates
             ORDER BY name
             "#,
@@ -102,7 +104,7 @@ impl MealTemplateRepository {
 
         let rows = sqlx::query(
             r#"
-            SELECT id, name, description, compatible_slots, location_type, created_at, updated_at
+            SELECT id, name, description, compatible_slots, location_type, weekly_limit, created_at, updated_at
             FROM meal_templates
             WHERE location_type = ?1 OR location_type = 'any'
             ORDER BY name
@@ -133,7 +135,7 @@ impl MealTemplateRepository {
 
         let rows = sqlx::query(
             r#"
-            SELECT id, name, description, compatible_slots, location_type, created_at, updated_at
+            SELECT id, name, description, compatible_slots, location_type, weekly_limit, created_at, updated_at
             FROM meal_templates
             WHERE name LIKE ?1 OR description LIKE ?1
             ORDER BY name
@@ -165,6 +167,10 @@ impl MealTemplateRepository {
         };
         let compatible_slots = update.compatible_slots.unwrap_or(existing.compatible_slots);
         let location_type = update.location_type.unwrap_or(existing.location_type);
+        let weekly_limit = match update.weekly_limit {
+            Some(val) => val,
+            None => existing.weekly_limit,
+        };
 
         let location_str = location_type.to_db_string();
         let compatible_slots_json = MealTemplate::serialize_compatible_slots(&compatible_slots);
@@ -172,15 +178,16 @@ impl MealTemplateRepository {
         let row = sqlx::query(
             r#"
             UPDATE meal_templates
-            SET name = ?1, description = ?2, compatible_slots = ?3, location_type = ?4
-            WHERE id = ?5
-            RETURNING id, name, description, compatible_slots, location_type, created_at, updated_at
+            SET name = ?1, description = ?2, compatible_slots = ?3, location_type = ?4, weekly_limit = ?5
+            WHERE id = ?6
+            RETURNING id, name, description, compatible_slots, location_type, weekly_limit, created_at, updated_at
             "#,
         )
         .bind(&name)
         .bind(&description)
         .bind(&compatible_slots_json)
         .bind(location_str)
+        .bind(weekly_limit)
         .bind(id)
         .fetch_one(pool)
         .await?;
@@ -230,6 +237,7 @@ mod tests {
             description: Some("Bread with jam".to_string()),
             compatible_slots: vec![SlotType::Breakfast, SlotType::MorningSnack],
             location_type: LocationType::Home,
+            weekly_limit: Some(3),
         };
 
         let template = MealTemplateRepository::create(&pool, create).await.unwrap();
@@ -237,6 +245,7 @@ mod tests {
         assert_eq!(template.name, "Pane con marmellata");
         assert_eq!(template.compatible_slots.len(), 2);
         assert_eq!(template.location_type, LocationType::Home);
+        assert_eq!(template.weekly_limit, Some(3));
         assert!(template.id > 0);
     }
 
@@ -251,6 +260,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Breakfast],
                 location_type: LocationType::Any,
+                weekly_limit: None,
             },
         )
         .await
@@ -276,6 +286,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -288,6 +299,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Office,
+                weekly_limit: None,
             },
         )
         .await
@@ -300,6 +312,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Any,
+                weekly_limit: None,
             },
         )
         .await
@@ -326,6 +339,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Breakfast],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -338,6 +352,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch, SlotType::Dinner],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -367,6 +382,7 @@ mod tests {
                 description: Some("Classic pasta dish".to_string()),
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -379,6 +395,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Dinner],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -407,6 +424,7 @@ mod tests {
                 description: Some("Original description".to_string()),
                 compatible_slots: vec![SlotType::Breakfast],
                 location_type: LocationType::Home,
+                weekly_limit: Some(5),
             },
         )
         .await
@@ -420,6 +438,7 @@ mod tests {
                 description: Some(None), // Clear description
                 compatible_slots: Some(vec![SlotType::Lunch, SlotType::Dinner]),
                 location_type: Some(LocationType::Office),
+                weekly_limit: Some(Some(3)),
             },
         )
         .await
@@ -429,6 +448,7 @@ mod tests {
         assert!(updated.description.is_none());
         assert_eq!(updated.compatible_slots.len(), 2);
         assert_eq!(updated.location_type, LocationType::Office);
+        assert_eq!(updated.weekly_limit, Some(3));
     }
 
     #[tokio::test]
@@ -442,6 +462,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Breakfast],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -470,6 +491,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Breakfast],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await;

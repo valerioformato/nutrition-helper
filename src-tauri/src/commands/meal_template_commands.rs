@@ -121,6 +121,7 @@ mod tests {
             description: Some("Bread with jam".to_string()),
             compatible_slots: vec![SlotType::Breakfast, SlotType::MorningSnack],
             location_type: LocationType::Home,
+            weekly_limit: None,
         };
 
         let created = MealTemplateRepository::create(&pool, create_template)
@@ -151,6 +152,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Breakfast],
                 location_type: LocationType::Any,
+                weekly_limit: None,
             },
         )
         .await
@@ -163,6 +165,7 @@ mod tests {
                 description: Some("Pasta dish".to_string()),
                 compatible_slots: vec![SlotType::Lunch, SlotType::Dinner],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -183,6 +186,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -195,6 +199,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Office,
+                weekly_limit: None,
             },
         )
         .await
@@ -218,6 +223,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Breakfast],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -230,6 +236,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch, SlotType::Dinner],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -259,6 +266,7 @@ mod tests {
                 description: Some("Classic pasta dish".to_string()),
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -271,6 +279,7 @@ mod tests {
                 description: Some("Fresh salad".to_string()),
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Office,
+                weekly_limit: None,
             },
         )
         .await
@@ -299,6 +308,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -312,6 +322,7 @@ mod tests {
                 description: Some(Some("New description".to_string())),
                 compatible_slots: Some(vec![SlotType::Lunch, SlotType::Dinner]),
                 location_type: Some(LocationType::Office),
+                weekly_limit: None,
             },
         )
         .await
@@ -334,6 +345,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await
@@ -362,6 +374,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![SlotType::Lunch],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await;
@@ -376,6 +389,7 @@ mod tests {
                 description: None,
                 compatible_slots: vec![],
                 location_type: LocationType::Home,
+                weekly_limit: None,
             },
         )
         .await;
