@@ -481,7 +481,7 @@ mod tests {
             .await
             .expect("Failed to create option 1");
 
-        let created2 = MealOptionRepository::create(&pool, option2)
+        let _created2 = MealOptionRepository::create(&pool, option2)
             .await
             .expect("Failed to create option 2");
 
@@ -500,7 +500,7 @@ mod tests {
         // Find the option with tags
         let option_with_tag = options_with_tags
             .iter()
-            .find(|o| o.tags.len() > 0)
+            .find(|o| !o.tags.is_empty())
             .expect("Should find option with tag");
 
         assert_eq!(option_with_tag.option.id, created1.id);

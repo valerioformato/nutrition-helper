@@ -128,7 +128,7 @@ pub async fn create_entry(
     let warnings = ValidationService::validate_meal_entry(
         pool.inner(),
         entry.meal_option_id,
-        entry.slot_type.clone(),
+        entry.slot_type,
         entry.date,
     )
     .await?;
