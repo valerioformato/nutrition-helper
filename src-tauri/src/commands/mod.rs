@@ -1,4 +1,7 @@
 // Command handlers module
 // Tauri commands for IPC communication between frontend and backend
 
-// Commands will be implemented in Phase 1
+pub mod tag_commands;
+
+// Re-export all commands for easy registration
+pub use tag_commands::*;

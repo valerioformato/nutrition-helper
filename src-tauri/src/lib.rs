@@ -2,12 +2,16 @@
 
 mod commands;
 mod db;
+mod error;
 mod models;
 mod repository;
 mod services;
 
 use sqlx::SqlitePool;
 use tauri::Manager;
+
+// Re-export error types for use in commands
+pub use error::{ApiError, ApiResult};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -50,7 +54,19 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, test_database])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            test_database,
+            // Tag commands
+            commands::get_all_tags,
+            commands::get_tag_by_id,
+            commands::get_tag_by_name,
+            commands::get_tags_by_category,
+            commands::get_tag_children,
+            commands::create_tag,
+            commands::update_tag,
+            commands::delete_tag,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
