@@ -83,6 +83,9 @@ jobs:
       - name: Check TypeScript types
         run: npm run check
 
+      - name: Run TypeScript tests
+        run: npm test -- --run
+
       - name: Lint
         run: npm run lint
         continue-on-error: true

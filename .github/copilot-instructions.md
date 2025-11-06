@@ -200,7 +200,7 @@ We are in Phase 0: Setting up the project scaffolding. Next steps will be buildi
 ## Development Workflow
 
 - **Test-Driven Development**: Write tests alongside or before implementation
-- **Run Tests Frequently**: 
+- **Run Tests Frequently**:
   - Backend: `cargo test` after every significant change
   - Frontend: `npm test` for unit tests, `npm run test:coverage` for coverage
 - **Run Clippy Before Committing**: Always run `cargo clippy --lib --tests -- -D warnings -A dead_code -A unused_imports` before committing to ensure code quality

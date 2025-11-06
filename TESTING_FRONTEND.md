@@ -37,10 +37,10 @@ src/
 ### Basic Test Example
 
 ```typescript
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-describe('MyFunction', () => {
-  it('should do something', () => {
+describe("MyFunction", () => {
+  it("should do something", () => {
     const result = myFunction();
     expect(result).toBe(expected);
   });
@@ -52,26 +52,26 @@ describe('MyFunction', () => {
 The Tauri API is automatically mocked in tests. To customize mock behavior:
 
 ```typescript
-import { vi } from 'vitest';
-import { invoke } from '@tauri-apps/api/core';
+import { vi } from "vitest";
+import { invoke } from "@tauri-apps/api/core";
 
 // Mock a specific command
-vi.mocked(invoke).mockResolvedValueOnce({ id: 1, name: 'test' });
+vi.mocked(invoke).mockResolvedValueOnce({ id: 1, name: "test" });
 
 // Your test that uses the mocked command
 const result = await myApiFunction();
-expect(result).toEqual({ id: 1, name: 'test' });
+expect(result).toEqual({ id: 1, name: "test" });
 ```
 
 ### Component Testing
 
 ```typescript
-import { render, screen } from '@testing-library/react';
-import { MyComponent } from './MyComponent';
+import { render, screen } from "@testing-library/react";
+import { MyComponent } from "./MyComponent";
 
-it('renders correctly', () => {
+it("renders correctly", () => {
   render(<MyComponent />);
-  expect(screen.getByText('Hello')).toBeInTheDocument();
+  expect(screen.getByText("Hello")).toBeInTheDocument();
 });
 ```
 

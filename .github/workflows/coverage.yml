@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  coverage:
-    name: Generate Test Coverage
+  coverage-rust:
+    name: Rust Backend Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -44,22 +44,58 @@ jobs:
         working-directory: src-tauri
         run: cargo tarpaulin --lib --out xml --output-dir ../coverage --timeout 300
 
-      - name: Upload coverage to Codecov
+      - name: Upload Rust coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage/cobertura.xml
+          flags: rust
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Check coverage threshold
+      - name: Check Rust coverage threshold
         working-directory: src-tauri
         run: |
           cargo tarpaulin --lib --out stdout | tee coverage.txt
           COVERAGE=$(grep -oP '\d+\.\d+(?=% coverage)' coverage.txt | head -1)
-          echo "Coverage: $COVERAGE%"
+          echo "Backend Coverage: $COVERAGE%"
           if (( $(echo "$COVERAGE < 85.0" | bc -l) )); then
-            echo "❌ Coverage $COVERAGE% is below 85% threshold"
+            echo "❌ Backend coverage $COVERAGE% is below 85% threshold"
             exit 1
           else
-            echo "✅ Coverage $COVERAGE% meets 85% threshold"
+            echo "✅ Backend coverage $COVERAGE% meets 85% threshold"
           fi
+
+  coverage-frontend:
+    name: Frontend Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate coverage
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json
+          flags: frontend
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Check frontend coverage threshold
+        run: |
+          # Extract coverage percentage from vitest output
+          npm run test:coverage 2>&1 | tee coverage-output.txt
+          # Note: Threshold check to be implemented when we have more frontend code
+          # Current threshold: 70% (will be enforced once we have substantial frontend code)
+          echo "Frontend coverage report generated successfully"
