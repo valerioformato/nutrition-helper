@@ -18,6 +18,7 @@
 
 ### Next Up
 
+- 📋 **Add Command-Level Tests**: Increase backend coverage from 66% to 85%+ by testing Tauri command handlers
 - 📋 **Phase 3**: Meal Selection & Filtering
 - 📋 **Phase 4**: Meal Details & Editing
 - 📋 **Phase 6**: Weekly View & Analytics
@@ -26,10 +27,14 @@
 ### Key Achievements
 
 - Complete backend API with 41 Tauri commands
-- 139 backend tests passing (85%+ coverage)
+- 139 backend tests passing (repository/model/service layers well-tested)
 - Full Templates Manager with hierarchical tag support
 - Database schema finalized and migrated
 - CI/CD pipeline operational
+
+### Known Issues
+
+- **Code Coverage**: Backend at 66.41% (command handlers untested, need 173 lines of test coverage to reach 85%)
 
 ---
 
