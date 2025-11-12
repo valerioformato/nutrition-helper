@@ -56,8 +56,8 @@ impl CreateTag {
         }
 
         if let Some(suggestion) = self.weekly_suggestion {
-            if suggestion <= 0 {
-                return Err("Weekly suggestion must be positive".to_string());
+            if suggestion < 0 {
+                return Err("Weekly suggestion cannot be negative".to_string());
             }
         }
 
@@ -100,15 +100,25 @@ mod tests {
         };
         assert!(invalid.validate().is_err());
 
-        // Invalid weekly suggestion
+        // Invalid weekly suggestion (negative)
         let invalid = CreateTag {
             name: "pasta".to_string(),
             display_name: "Pasta".to_string(),
             category: TagCategory::Ingredient,
-            weekly_suggestion: Some(0),
+            weekly_suggestion: Some(-1),
             parent_tag_id: None,
         };
         assert!(invalid.validate().is_err());
+
+        // Valid weekly suggestion of 0 (meaning "avoid")
+        let valid_zero = CreateTag {
+            name: "pizza".to_string(),
+            display_name: "Pizza".to_string(),
+            category: TagCategory::Ingredient,
+            weekly_suggestion: Some(0),
+            parent_tag_id: None,
+        };
+        assert!(valid_zero.validate().is_ok());
     }
 
     #[test]

@@ -717,7 +717,7 @@ CREATE INDEX idx_meal_options_category ON meal_options(category);
 - [ ] Create templates list view
 - [ ] Build template form (create/edit)
 - [ ] Implement CRUD operations for templates
-- [ ] Build options form (create/edit) 
+- [ ] Build options form (create/edit)
 - [ ] Implement CRUD operations for options
 - [ ] Add template/option relationship management
 - [ ] Add tags management (create/assign tags)
