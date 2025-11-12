@@ -527,6 +527,12 @@ CREATE INDEX idx_meal_options_category ON meal_options(category);
 
 ## 4. Development Phases
 
+**Note on Development Order**: Phases are numbered according to the original user-journey plan, but actual development follows a more pragmatic order. Phase 5 (Templates Manager) is being implemented after Phase 2 to enable testing and real data usage.
+
+**Actual Development Order**: Phase 0 → Phase 1 → Phase 2 → **Phase 5** → Phase 3 → Phase 4 → Phase 6 → Phase 7
+
+---
+
 ### Phase 0: Project Setup & Scaffolding ✅ (COMPLETED)
 
 **Goal**: Get development environment ready with comprehensive testing infrastructure
@@ -700,18 +706,23 @@ CREATE INDEX idx_meal_options_category ON meal_options(category);
 
 ---
 
-### Phase 5: Templates Manager (Week 7)
+### Phase 5: Templates Manager (Implemented after Phase 2) 🔨 **IN PROGRESS**
 
 **Goal**: Users can manage their meal options
+
+**Note**: Implementing this phase now (after Phase 2) to enable testing and populate the database with real meal data.
 
 **Tasks:**
 
 - [ ] Create templates list view
 - [ ] Build template form (create/edit)
-- [ ] Implement CRUD operations
-- [ ] Add template categories and tags management
+- [ ] Implement CRUD operations for templates
+- [ ] Build options form (create/edit) 
+- [ ] Implement CRUD operations for options
+- [ ] Add template/option relationship management
+- [ ] Add tags management (create/assign tags)
 - [ ] Implement weekly limit configuration
-- [ ] Add template search/filter
+- [ ] Add template/option search/filter
 - [ ] (Optional) CSV import for bulk template creation
 
 **Deliverable**: Self-service template management
