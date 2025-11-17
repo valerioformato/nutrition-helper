@@ -239,6 +239,28 @@ impl MealEntryRepository {
         Ok(row)
     }
 
+    /// Get recently used meal entries (for quick reselection)
+    /// Returns the most recent unique meal_option_id entries, ordered by most recent first
+    pub async fn get_recent_entries(pool: &SqlitePool, limit: i32) -> Result<Vec<MealEntry>> {
+        let rows = sqlx::query(
+            "SELECT id, meal_option_id, date, slot_type, location, servings, notes, completed,
+                    created_at, updated_at
+             FROM meal_entries 
+             WHERE id IN (
+                 SELECT MAX(id) 
+                 FROM meal_entries 
+                 GROUP BY meal_option_id
+             )
+             ORDER BY date DESC, created_at DESC
+             LIMIT ?",
+        )
+        .bind(limit)
+        .fetch_all(pool)
+        .await?;
+
+        rows.iter().map(Self::row_to_entry).collect()
+    }
+
     /// Update a meal entry
     pub async fn update(pool: &SqlitePool, id: i64, update: UpdateMealEntry) -> Result<MealEntry> {
         // Validate using the model's validation method

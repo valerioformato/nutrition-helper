@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { MealCard } from "../components/meals/MealCard";
-import { MealSelectionModal } from "../components/meals/MealSelectionModal";
 import { MealSlot } from "../components/meals/MealSlot";
-import { OptionSelectionModal } from "../components/meals/OptionSelectionModal";
+import { MealWizardModal } from "../components/meals/MealWizardModal";
 import { getEntriesByDate, getOptionById, getTemplateById } from "../lib/api";
 import {
     MealEntry,
@@ -24,12 +23,8 @@ interface EntryWithDetails {
  */
 export function DailyView() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [templateModalOpen, setTemplateModalOpen] = useState(false);
-  const [optionModalOpen, setOptionModalOpen] = useState(false);
+  const [wizardModalOpen, setWizardModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<SlotType | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<MealTemplate | null>(
-    null
-  );
   
   // Entries data
   const [entries, setEntries] = useState<Map<SlotType, EntryWithDetails>>(
@@ -246,7 +241,7 @@ export function DailyView() {
                     isEmpty
                       ? () => {
                           setSelectedSlot(slot);
-                          setTemplateModalOpen(true);
+                          setWizardModalOpen(true);
                         }
                       : undefined
                   }
@@ -274,40 +269,24 @@ export function DailyView() {
         </div>
       </div>
 
-      {/* Meal Selection Modal - Step 1: Choose Template */}
+      {/* Meal Wizard Modal - Two-step flow for adding meals */}
       {selectedSlot && (
-        <MealSelectionModal
-          isOpen={templateModalOpen}
+        <MealWizardModal
+          key={`wizard-${selectedSlot}`}
+          isOpen={wizardModalOpen}
           onClose={() => {
-            setTemplateModalOpen(false);
+            setWizardModalOpen(false);
             setSelectedSlot(null);
           }}
-          slotType={selectedSlot}
-          slotName={getSlotDisplayName(selectedSlot)}
-          onSelectTemplate={(template) => {
-            setSelectedTemplate(template);
-            setTemplateModalOpen(false);
-            setOptionModalOpen(true);
-          }}
-        />
-      )}
-
-      {/* Option Selection Modal - Step 2: Choose Option & Configure */}
-      {selectedSlot && selectedTemplate && (
-        <OptionSelectionModal
-          isOpen={optionModalOpen}
-          onClose={() => {
-            setOptionModalOpen(false);
-            setSelectedTemplate(null);
-            setSelectedSlot(null);
-          }}
-          template={selectedTemplate}
           slotType={selectedSlot}
           slotName={getSlotDisplayName(selectedSlot)}
           date={selectedDate.toISOString().split("T")[0]}
           onSuccess={() => {
             // Refresh entries to show the newly added meal
             loadEntries();
+            // Close wizard and reset state
+            setWizardModalOpen(false);
+            setSelectedSlot(null);
           }}
         />
       )}

@@ -210,7 +210,7 @@ export async function updateTemplate(
 ): Promise<MealTemplate> {
   const result = await invoke<MealTemplate>("update_template", {
     id,
-    template,
+    updates: template,
   });
   if (isApiError(result)) {
     throw new Error(result.message);
@@ -333,7 +333,7 @@ export async function updateOption(
   id: number,
   option: UpdateMealOption
 ): Promise<MealOption> {
-  const result = await invoke<MealOption>("update_option", { id, option });
+  const result = await invoke<MealOption>("update_option", { id, updates: option });
   if (isApiError(result)) {
     throw new Error(result.message);
   }
@@ -479,6 +479,17 @@ export async function getEntriesByMealOption(
   const result = await invoke<MealEntry[]>("get_entries_by_meal_option", {
     mealOptionId,
   });
+  if (isApiError(result)) {
+    throw new Error(result.message);
+  }
+  return result;
+}
+
+/**
+ * Get recently used meal entries (for quick reselection)
+ */
+export async function getRecentEntries(limit: number): Promise<MealEntry[]> {
+  const result = await invoke<MealEntry[]>("get_recent_entries", { limit });
   if (isApiError(result)) {
     throw new Error(result.message);
   }

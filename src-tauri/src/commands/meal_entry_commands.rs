@@ -90,6 +90,18 @@ pub async fn get_entries_by_meal_option(
         .map_err(Into::into)
 }
 
+/// Get recently used meal entries (for quick reselection)
+/// Returns the most recent unique meal entries, ordered by most recent first
+#[tauri::command]
+pub async fn get_recent_entries(
+    limit: i32,
+    pool: State<'_, SqlitePool>,
+) -> ApiResult<Vec<MealEntry>> {
+    MealEntryRepository::get_recent_entries(pool.inner(), limit)
+        .await
+        .map_err(Into::into)
+}
+
 /// Get weekly usage count for a specific meal option
 #[tauri::command]
 pub async fn get_weekly_usage(
