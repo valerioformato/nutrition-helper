@@ -207,4 +207,68 @@ mod tests {
         let parsed = MealTemplate::parse_compatible_slots(&json_str).unwrap();
         assert_eq!(parsed, slots);
     }
+
+    #[test]
+    fn test_meal_template_row_conversion() {
+        use chrono::Utc;
+
+        // Test successful conversion
+        let row = MealTemplateRow {
+            id: 1,
+            name: "Test Template".to_string(),
+            description: Some("Test description".to_string()),
+            compatible_slots: r#"["breakfast","lunch"]"#.to_string(),
+            location_type: "home".to_string(),
+            weekly_limit: Some(3),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let template: MealTemplate = row.try_into().unwrap();
+        assert_eq!(template.id, 1);
+        assert_eq!(template.name, "Test Template");
+        assert_eq!(template.compatible_slots.len(), 2);
+        assert_eq!(template.location_type, LocationType::Home);
+        assert_eq!(template.weekly_limit, Some(3));
+
+        // Test invalid compatible_slots JSON
+        let invalid_row = MealTemplateRow {
+            id: 1,
+            name: "Test".to_string(),
+            description: None,
+            compatible_slots: "invalid json".to_string(),
+            location_type: "home".to_string(),
+            weekly_limit: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let result: Result<MealTemplate, String> = invalid_row.try_into();
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("Failed to parse compatible_slots"));
+
+        // Test invalid location_type
+        let invalid_row = MealTemplateRow {
+            id: 1,
+            name: "Test".to_string(),
+            description: None,
+            compatible_slots: r#"["breakfast"]"#.to_string(),
+            location_type: "invalid_location".to_string(),
+            weekly_limit: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let result: Result<MealTemplate, String> = invalid_row.try_into();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_compatible_slots_error() {
+        // Test error case for invalid JSON
+        let result = MealTemplate::parse_compatible_slots("not valid json");
+        assert!(result.is_err());
+    }
 }

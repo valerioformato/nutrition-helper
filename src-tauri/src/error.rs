@@ -168,4 +168,37 @@ mod tests {
             _ => panic!("Expected NotFound error"),
         }
     }
+
+    #[test]
+    fn test_business_validation_error_display() {
+        use crate::services::ValidationError;
+
+        let val_err = ValidationError::WeeklyLimitExceeded {
+            item_name: "Pasta".to_string(),
+            limit: 2,
+            current_usage: 3,
+        };
+        let api_err = ApiError::BusinessValidationError(val_err);
+        let display = format!("{}", api_err);
+        assert!(display.contains("Business validation error"));
+        assert!(display.contains("Weekly limit exceeded"));
+    }
+
+    #[test]
+    fn test_business_validation_error_conversion() {
+        use crate::models::SlotType;
+        use crate::services::ValidationError;
+
+        let val_err = ValidationError::IncompatibleSlot {
+            option_name: "Pizza".to_string(),
+            slot: SlotType::Breakfast,
+            compatible_slots: vec![SlotType::Lunch],
+        };
+
+        let api_err: ApiError = val_err.into();
+        match api_err {
+            ApiError::BusinessValidationError(_) => {}
+            _ => panic!("Expected BusinessValidationError"),
+        }
+    }
 }

@@ -603,4 +603,113 @@ mod tests {
             Err(ValidationError::WeeklyLimitExceeded { .. })
         ));
     }
+
+    #[test]
+    fn test_validation_error_display() {
+        // Test Display implementation for WeeklyLimitExceeded
+        let error = ValidationError::WeeklyLimitExceeded {
+            item_name: "Pasta".to_string(),
+            limit: 2,
+            current_usage: 3,
+        };
+        let display_str = format!("{}", error);
+        assert!(display_str.contains("Weekly limit exceeded"));
+        assert!(display_str.contains("Pasta"));
+        assert!(display_str.contains("3/2"));
+
+        // Test Display implementation for IncompatibleSlot
+        let error = ValidationError::IncompatibleSlot {
+            option_name: "Pizza".to_string(),
+            slot: SlotType::Breakfast,
+            compatible_slots: vec![SlotType::Lunch, SlotType::Dinner],
+        };
+        let display_str = format!("{}", error);
+        assert!(display_str.contains("Pizza"));
+        assert!(display_str.contains("not compatible"));
+
+        // Test Display implementation for TagSuggestionExceeded
+        let error = ValidationError::TagSuggestionExceeded {
+            tag_name: "bread".to_string(),
+            suggestion: 3,
+            current_usage: 4,
+        };
+        let display_str = format!("{}", error);
+        assert!(display_str.contains("bread"));
+        assert!(display_str.contains("suggestion exceeded"));
+        assert!(display_str.contains("4/3"));
+    }
+
+    #[tokio::test]
+    async fn test_validation_with_invalid_meal_option() {
+        let pool = setup_test_pool().await;
+        let invalid_option_id = 99999;
+        let date = NaiveDate::from_ymd_opt(2024, 11, 4).unwrap();
+
+        // Should fail gracefully with invalid option ID
+        let result = ValidationService::validate_meal_entry(
+            &pool,
+            invalid_option_id,
+            SlotType::Breakfast,
+            date,
+        )
+        .await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_check_weekly_limit_with_invalid_option() {
+        let pool = setup_test_pool().await;
+        let invalid_option_id = 99999;
+        let date = NaiveDate::from_ymd_opt(2024, 11, 4).unwrap();
+
+        // Should fail gracefully
+        let result = ValidationService::check_weekly_limit(&pool, invalid_option_id, date).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_check_tag_suggestions_with_invalid_option() {
+        let pool = setup_test_pool().await;
+        let invalid_option_id = 99999;
+        let date = NaiveDate::from_ymd_opt(2024, 11, 4).unwrap();
+
+        // Should fail gracefully
+        let result = ValidationService::check_tag_suggestions(&pool, invalid_option_id, date).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_tag_suggestions_with_no_tags() {
+        let pool = setup_test_pool().await;
+        let template_id = create_test_template_with_limit(&pool, None).await;
+        let option_id = create_test_option(&pool, template_id).await;
+        let date = NaiveDate::from_ymd_opt(2024, 11, 4).unwrap();
+
+        // Option with no tags should return no warnings
+        let warnings = ValidationService::check_tag_suggestions(&pool, option_id, date)
+            .await
+            .unwrap();
+        assert_eq!(warnings.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_tag_suggestions_without_suggestion_limit() {
+        let pool = setup_test_pool().await;
+        let template_id = create_test_template_with_limit(&pool, None).await;
+        let option_id = create_test_option(&pool, template_id).await;
+        let tag_id = create_test_tag(&pool, "no_limit_tag", None).await;
+
+        // Add tag without suggestion
+        MealOptionRepository::add_tags(&pool, option_id, vec![tag_id])
+            .await
+            .unwrap();
+
+        let date = NaiveDate::from_ymd_opt(2024, 11, 4).unwrap();
+
+        // Should return no warnings since tag has no suggestion limit
+        let warnings = ValidationService::check_tag_suggestions(&pool, option_id, date)
+            .await
+            .unwrap();
+        assert_eq!(warnings.len(), 0);
+    }
 }
