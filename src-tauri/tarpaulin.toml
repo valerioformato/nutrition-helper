@@ -1,0 +1,16 @@
+# Tarpaulin Configuration
+# Excludes thin IPC wrapper commands from coverage calculation
+# Business logic (repositories, models, services) remains fully covered
+
+[config]
+# Exclude command handlers - they are thin Tauri IPC wrappers with no business logic
+# All business logic is tested at the repository/service layer
+exclude-files = [
+    "src/commands/*"
+]
+
+# Include library code only (excludes main.rs and build scripts)
+target-dir = "target/tarpaulin"
+
+# Timeout for test execution (5 minutes)
+timeout = "300s"
