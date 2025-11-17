@@ -1,13 +1,37 @@
+import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
-import { createEntry, getOptionsByTemplate } from "../../lib/api";
+import { createEntry, getWeeklyUsage } from "../../lib/api";
 import {
     CreateMealEntry,
     LocationType,
-    MealOption,
+    MealOptionWithTags,
     MealTemplate,
-    SlotType,
+    SlotType
 } from "../../lib/types";
 import { Modal } from "../common/Modal";
+
+// Helper function to get current week string (YYYY-WW format)
+// Must match SQLite's migration: shifts date back 1 day then applies %W
+// This makes Monday the first day of the week (Mon-Sun weeks)
+function getCurrentWeek(): string {
+  const now = new Date();
+  
+  // Shift back 1 day to convert Mon-Sun weeks to SQLite's Sun-Sat %W format
+  const shiftedDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const year = shiftedDate.getFullYear();
+  
+  // Get January 1st of the shifted year
+  const jan1 = new Date(year, 0, 1);
+  
+  // Calculate days since January 1st
+  const dayOfYear = Math.floor((shiftedDate.getTime() - jan1.getTime()) / (24 * 60 * 60 * 1000));
+  
+  // SQLite %W algorithm: (day_of_year + day_of_week_of_jan1) / 7
+  const jan1Day = jan1.getDay();
+  const weekNumber = Math.floor((dayOfYear + jan1Day) / 7);
+  
+  return `${year}-${weekNumber.toString().padStart(2, '0')}`;
+}
 
 interface OptionSelectionModalProps {
   isOpen: boolean;
@@ -17,6 +41,7 @@ interface OptionSelectionModalProps {
   slotName: string;
   date: string; // ISO date string
   onSuccess: () => void;
+  onBack?: () => void; // Optional back button callback
 }
 
 export function OptionSelectionModal({
@@ -27,9 +52,11 @@ export function OptionSelectionModal({
   slotName,
   date,
   onSuccess,
+  onBack,
 }: OptionSelectionModalProps) {
-  const [options, setOptions] = useState<MealOption[]>([]);
-  const [selectedOption, setSelectedOption] = useState<MealOption | null>(null);
+  const [options, setOptions] = useState<MealOptionWithTags[]>([]);
+  const [selectedOption, setSelectedOption] = useState<MealOptionWithTags | null>(null);
+  const [weeklyUsage, setWeeklyUsage] = useState<Map<number, number>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -57,14 +84,44 @@ export function OptionSelectionModal({
     setLoading(true);
     setError(null);
     try {
-      const templateOptions = await getOptionsByTemplate(template.id);
+      // Fetch options with tags
+      const templateOptions = await invoke<MealOptionWithTags[]>(
+        "get_options_by_template_with_tags",
+        { templateId: template.id }
+      );
+      
+      // Fetch weekly usage for all options
+      const currentWeek = getCurrentWeek();
+      const usagePromises = templateOptions.map(async (option) => {
+        try {
+          const usage = await getWeeklyUsage(option.id, currentWeek);
+          return { optionId: option.id, count: usage?.usage_count || 0 };
+        } catch {
+          return { optionId: option.id, count: 0 };
+        }
+      });
+      
+      const usageResults = await Promise.all(usagePromises);
+      const usageMap = new Map<number, number>();
+      usageResults.forEach(({ optionId, count }) => {
+        usageMap.set(optionId, count);
+      });
+      
       setOptions(templateOptions);
+      setWeeklyUsage(usageMap);
     } catch (err) {
       console.error("Failed to load options:", err);
       setError("Failed to load meal options. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get total weekly usage for the template (sum usage across all its options)
+  const getTemplateUsage = (): number => {
+    if (options.length === 0) return 0;
+    // Sum the usage count across all options in this template
+    return options.reduce((sum, opt) => sum + (weeklyUsage.get(opt.id) || 0), 0);
   };
 
   const handleSave = async () => {
@@ -74,6 +131,13 @@ export function OptionSelectionModal({
     setError(null);
 
     try {
+      // Auto-complete meals added to past dates
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const mealDate = new Date(date);
+      mealDate.setHours(0, 0, 0, 0);
+      const isPastDate = mealDate < today;
+
       const entry: CreateMealEntry = {
         meal_option_id: selectedOption.id,
         date,
@@ -81,7 +145,7 @@ export function OptionSelectionModal({
         location,
         servings,
         notes: notes.trim() || null,
-        completed: false,
+        completed: isPastDate, // Auto-complete if past date
       };
 
       await createEntry(entry);
@@ -101,6 +165,31 @@ export function OptionSelectionModal({
       onClose={onClose}
       title={`${template.name} - ${slotName}`}
     >
+      {/* Back Button (when used in wizard) */}
+      {onBack && (
+        <div className="mb-4">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Back to Meal Selection
+          </button>
+        </div>
+      )}
+
       {/* Loading State */}
       {loading && (
         <div className="flex items-center justify-center py-8">
@@ -135,32 +224,83 @@ export function OptionSelectionModal({
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">
                   Select an option:
                 </h3>
-                <div className="space-y-2">
-                  {options.map((option) => (
-                    <button
-                      key={option.id}
-                      onClick={() => setSelectedOption(option)}
-                      className={`w-full text-left p-3 border-2 rounded-md transition-colors ${
-                        selectedOption?.id === option.id
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      <h4 className="font-medium text-gray-900">
-                        {option.name}
-                      </h4>
-                      {option.description && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          {option.description}
-                        </p>
-                      )}
-                      {option.nutritional_notes && (
-                        <p className="text-xs text-gray-500 mt-1 italic">
-                          {option.nutritional_notes}
-                        </p>
-                      )}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {options.map((option) => {
+                    // Use template-level usage (sum of all options) for limit checking
+                    const templateUsage = getTemplateUsage();
+                    const isExhausted = !!(template.weekly_limit && templateUsage >= template.weekly_limit);
+                    
+                    return (
+                      <button
+                        key={option.id}
+                        onClick={() => !isExhausted && setSelectedOption(option)}
+                        disabled={isExhausted}
+                        className={`relative text-left p-4 border-2 rounded-lg transition-all ${
+                          selectedOption?.id === option.id
+                            ? "border-blue-500 bg-blue-50 shadow-md"
+                            : isExhausted
+                            ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
+                            : "border-gray-200 hover:border-blue-300 hover:bg-gray-50 hover:shadow-sm"
+                        }`}
+                      >
+                        {isExhausted && (
+                          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded font-bold">
+                            LIMIT
+                          </div>
+                        )}
+                        
+                        <h4 className="font-semibold text-gray-900 mb-2 pr-12">
+                          {option.name}
+                        </h4>
+                        
+                        {option.description && (
+                          <p className="text-sm text-gray-600 mb-2">
+                            {option.description}
+                          </p>
+                        )}
+                        
+                        {option.nutritional_notes && (
+                          <p className="text-xs text-gray-500 mb-3 italic">
+                            {option.nutritional_notes}
+                          </p>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {/* Weekly usage indicator - shows template-level usage */}
+                          {template.weekly_limit ? (
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              templateUsage === 0 ? "bg-green-100 text-green-800" :
+                              templateUsage < template.weekly_limit ? "bg-yellow-100 text-yellow-800" :
+                              "bg-red-100 text-red-800"
+                            }`}>
+                              {templateUsage}/{template.weekly_limit} this week
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-full">
+                              ∞ No limit
+                            </span>
+                          )}
+                          
+                          {/* Location compatibility */}
+                          {template.location_type !== "any" && (
+                            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                              {template.location_type === "home" && "🏠 Home"}
+                              {template.location_type === "office" && "🏢 Office"}
+                              {template.location_type === "restaurant" && "🍽️ Restaurant"}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {selectedOption?.id === option.id && (
+                          <div className="absolute bottom-2 right-2 text-blue-500">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

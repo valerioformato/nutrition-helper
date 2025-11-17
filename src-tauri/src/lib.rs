@@ -95,6 +95,7 @@ pub fn run() {
             commands::get_entry_by_date_and_slot,
             commands::get_entries_by_completed,
             commands::get_entries_by_meal_option,
+            commands::get_recent_entries,
             commands::get_weekly_usage,
             commands::get_weekly_tag_usage,
             commands::create_entry,

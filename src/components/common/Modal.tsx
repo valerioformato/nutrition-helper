@@ -42,7 +42,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       <div className="flex min-h-full items-center justify-center p-4">
         {/* Modal Content */}
         <div
-          className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col"
+          className="relative bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[85vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
